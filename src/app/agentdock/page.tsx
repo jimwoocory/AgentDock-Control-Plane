@@ -1,5 +1,5 @@
-import { ObserverDashboard } from '@/components/agentdock/observer-dashboard'
+import { FullDashboard } from '@/components/agentdock/full-dashboard'
 
 export default function AgentDockPage() {
-  return <ObserverDashboard />
+  return <FullDashboard />
 }
