@@ -6,6 +6,15 @@ import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 
+it.skipIf(process.platform !== 'win32')('parses Windows PowerShell 5.1 startup and stop scripts', async () => {
+  for (const name of ['start', 'stop', 'processes']) {
+    const filename = path.resolve('scripts/control-plane', `${name}.ps1`).replace(/'/g, "''")
+    const result = await promisify(execFile)('powershell.exe', ['-NoProfile', '-Command',
+      `$errors=$null; [System.Management.Automation.Language.Parser]::ParseFile('${filename}', [ref]$null, [ref]$errors) | Out-Null; if ($errors.Count) { throw 'Script parse failed' }; Write-Output 'parsed'`], { timeout: 10000 })
+    expect(result.stdout).toContain('parsed')
+  }
+})
+
 it('runs the actual collector under Node and persists a real file observation', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'cp-worker-test-'))
   try {
