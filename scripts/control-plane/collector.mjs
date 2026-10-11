@@ -1,13 +1,21 @@
 import { readTaskFiles, probeRuntime, observerSettings } from '../../src/lib/agentdock/adapter.ts'
 import { ObservationStore } from '../../src/lib/agentdock/store.ts'
+import { MonitorStore } from '../../src/lib/agentdock/monitor-store.ts'
+import { collectRuntimeMonitor } from '../../src/lib/agentdock/runtime-monitor.ts'
 
 const settings = observerSettings()
 const store = new ObservationStore(settings.databasePath, settings.key)
+const monitorStore = new MonitorStore(settings.databasePath, settings.key)
 let stopped = false
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => { stopped = true })
 console.log('AgentDock observer: read-only task files + loopback health; interval 15 seconds')
 while (!stopped) {
   try {
+    if (process.env.MC_RUNTIME_MONITOR_DISABLED !== '1') {
+      const monitor = await collectRuntimeMonitor()
+      if (monitor.capabilities.some(capability => capability.id !== 'agentdock' && capability.status === 'ok')) monitorStore.save(monitor)
+      else monitorStore.fail('运行时只读采集不可用，保留上次 Agent 快照。', new Date().toISOString(), monitor.capabilities)
+    }
     const runtime = await probeRuntime()
     try {
       const { tasks, errors } = await readTaskFiles(settings.sourceHome)
@@ -25,3 +33,4 @@ while (!stopped) {
   await new Promise(resolve => setTimeout(resolve, 15000))
 }
 store.close()
+monitorStore.close()
