@@ -62,8 +62,8 @@ describe('config data paths', () => {
     })
 
     expect(config.dataDir).toBe('/tmp/mission-control-data')
-    expect(config.dbPath).toBe('/tmp/mission-control-data/mission-control.db')
-    expect(config.tokensPath).toBe('/tmp/mission-control-data/mission-control-tokens.json')
+    expect(config.dbPath).toBe(path.join('/tmp/mission-control-data', 'mission-control.db'))
+    expect(config.tokensPath).toBe(path.join('/tmp/mission-control-data', 'mission-control-tokens.json'))
   })
 
   it('respects explicit db and token path overrides', async () => {
@@ -87,9 +87,10 @@ describe('config data paths', () => {
       MISSION_CONTROL_TOKENS_PATH: undefined,
     })
 
-    expect(config.dataDir).toMatch(/^\/tmp\/build-scratch\/worker-[^/]+$/)
-    expect(config.dbPath).toMatch(/^\/tmp\/build-scratch\/worker-[^/]+\/mission-control\.db$/)
-    expect(config.tokensPath).toMatch(/^\/tmp\/build-scratch\/worker-[^/]+\/mission-control-tokens\.json$/)
+    expect(path.dirname(config.dataDir)).toBe(path.normalize('/tmp/build-scratch'))
+    expect(path.basename(config.dataDir)).toMatch(/^worker-.+$/)
+    expect(config.dbPath).toBe(path.join(config.dataDir, 'mission-control.db'))
+    expect(config.tokensPath).toBe(path.join(config.dataDir, 'mission-control-tokens.json'))
   })
 
   it('allocates a distinct private scratch directory for each build worker', async () => {
@@ -117,7 +118,8 @@ describe('config data paths', () => {
     })
 
     const expectedBuildRoot = path.join(os.tmpdir(), 'mission-control-build')
-    expect(config.dataDir).toMatch(new RegExp(`^${expectedBuildRoot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/worker-[^/]+$`))
+    expect(path.dirname(config.dataDir)).toBe(expectedBuildRoot)
+    expect(path.basename(config.dataDir)).toMatch(/^worker-.+$/)
     expect(config.dbPath).toBe('/tmp/build.db')
     expect(config.tokensPath).toBe('/tmp/build-tokens.json')
   })

@@ -79,7 +79,7 @@ function initializeSchema() {
 
       // Start built-in scheduler for runtime installs only.
       // Skip during `next build` and E2E/test mode to keep startup deterministic.
-      if (!isBuildPhase && !isTestMode) {
+      if (!isBuildPhase && !isTestMode && process.env.MC_AGENTDOCK_P0 !== '1') {
         import('./scheduler').then(({ initScheduler }) => {
           initScheduler();
         }).catch(() => {
