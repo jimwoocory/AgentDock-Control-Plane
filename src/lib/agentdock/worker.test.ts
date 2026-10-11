@@ -23,7 +23,7 @@ it('runs the actual collector under Node and persists a real file observation', 
       id: 'tsk_3333333333333333', title: 'Worker fixture', status: 'active', phase: 'execute',
       created_at: '2026-10-11T00:00:00Z', updated_at: '2026-10-11T00:00:00Z', steps: [], events: [], conditions: [] }))
     const result = await promisify(execFile)(process.execPath, ['scripts/control-plane/collector.mjs', '--once'], {
-      env: { ...process.env, AGENTDOCK_HOME: path.join(root, 'source'), AGENTDOCK_OBSERVER_DB: path.join(root, 'observer.db'), AGENTDOCK_HEALTH_URL: 'http://127.0.0.1:1/healthz' },
+      env: { ...process.env, MC_RUNTIME_MONITOR_DISABLED: '1', AGENTDOCK_HOME: path.join(root, 'source'), AGENTDOCK_OBSERVER_DB: path.join(root, 'observer.db'), AGENTDOCK_HEALTH_URL: 'http://127.0.0.1:1/healthz' },
       timeout: 10000,
     })
     expect(result.stdout).toContain('task-count=1 source=ok runtime=unreachable')
