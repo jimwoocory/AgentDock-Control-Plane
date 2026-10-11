@@ -8,6 +8,6 @@ export async function GET(request: Request) {
   const denied = observerAccess(request)
   if (denied) return denied
   const store = openObservationStore()
-  try { return NextResponse.json(store.snapshot(), { headers: { 'Cache-Control': 'no-store' } }) }
+  try { return NextResponse.json({ ...store.snapshot(), validationFixture: process.env.MC_P0_VALIDATION === '1' }, { headers: { 'Cache-Control': 'no-store' } }) }
   finally { store.close() }
 }

@@ -187,7 +187,7 @@ export function proxy(request: NextRequest) {
   // In the observer deployment, only authentication and local metadata may mutate.
   // Neither upstream dispatch nor runtime management APIs are available in P0.
   if (process.env.MC_AGENTDOCK_P0 === '1' && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method.toUpperCase())) {
-    const localWrites = new Set(['/api/agentdock/projects', '/api/agentdock/bindings', '/api/agentdock/refresh', '/api/auth/login', '/api/auth/logout', '/api/auth/me', '/api/setup'])
+    const localWrites = new Set(['/api/agentdock/projects', '/api/agentdock/bindings', '/api/agentdock/refresh', '/api/agentdock/graph', '/api/auth/login', '/api/auth/logout', '/api/auth/me', '/api/setup'])
     if (!localWrites.has(pathname)) {
       return addSecurityHeaders(NextResponse.json({ error: 'P0 is read-only for runtime control' }, { status: 403 }), request)
     }

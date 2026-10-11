@@ -14,6 +14,12 @@ describe('P0 runtime isolation', () => {
     const { proxy } = await import('../../proxy')
     expect(proxy(new NextRequest('http://127.0.0.1:4310/api/agentdock/projects', { method: 'POST' })).status).toBe(401)
   })
+  it.each(['POST', 'PATCH'])('keeps %s to the graph behind normal authentication', async method => {
+    vi.stubEnv('MC_AGENTDOCK_P0', '1')
+    const { proxy } = await import('../../proxy')
+    expect(proxy(new NextRequest('http://127.0.0.1:4310/api/agentdock/graph', { method })).status).toBe(401)
+    expect(proxy(new NextRequest('http://127.0.0.1:4310/api/agentdock/agents', { method })).status).toBe(403)
+  })
   it('takes the default landing page to the observer panel in P0', async () => {
     vi.stubEnv('MC_AGENTDOCK_P0', '1')
     const { proxy } = await import('../../proxy')
