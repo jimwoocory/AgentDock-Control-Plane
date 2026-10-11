@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { FullDashboard } from './full-dashboard'
 import { AgentMonitor } from './agent-monitor'
+import { TaskGraph } from './task-graph'
 import { NodeEditor } from './node-editor'
 import type { GraphSnapshot } from '@/lib/agentdock/graph-types'
 import type { AgentMonitorSnapshot } from '@/lib/agentdock/monitor-types'
@@ -76,5 +77,15 @@ describe('FullDashboard', () => {
     fireEvent.change(screen.getByLabelText('标题'), { target: { value: '未保存 Feature' } })
     rerender(<NodeEditor node={{ ...graph.nodes[0] }} nodes={graph.nodes.map(node => ({ ...node }))} projectId={1} onCreate={onCreate} onSave={onSave} />)
     expect(screen.getByLabelText('标题')).toHaveValue('未保存 Feature')
+  })
+  it('同列依赖的箭头端点位于目标节点之外，避免方向标记被填充遮挡', () => {
+    const first = { ...graph.nodes[0], id: 'first', kind: 'task' as const, title: '前置任务', parentId: null, dependencies: [] }
+    const second = { ...first, id: 'second', title: '后续任务', dependencies: ['first'] }
+    const { container } = render(<TaskGraph nodes={[first, second]} selectedId={null} onSelect={() => {}} />)
+    const edge = container.querySelector('line[marker-end]')!
+    const box = container.querySelector('g[aria-label="后续任务"] rect')!
+    const x = Number(edge.getAttribute('x2')); const y = Number(edge.getAttribute('y2'))
+    const left = Number(box.getAttribute('x')); const top = Number(box.getAttribute('y'))
+    expect(x < left || x > left + Number(box.getAttribute('width')) || y < top || y > top + Number(box.getAttribute('height'))).toBe(true)
   })
 })
