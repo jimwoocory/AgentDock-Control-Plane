@@ -1,3 +1,4 @@
+import { loadGovernance, loadProjectManagement, contextDigest, approvalIsStale, handleGovernance } from './governance.mjs'
 const SOURCE = 'company:PC-20251130TKZA'
 const KINDS = ['epic','feature','task','subtask']
 const PRIORITIES = ['low','medium','high','urgent']
@@ -55,12 +56,20 @@ async function ingest(req,env) {
   const warnings=list(input.warnings,30).map(w=>text(w,1000))
   const data={sourceKey:SOURCE,machine:input.machine,capturedAt,taskReadOK,tasks,agents:agents.slice(0,100),capabilities,warnings}
   const saved=(await rows(env.DB,'SELECT * FROM cp_nodes')).map(n=>JSON.parse(n.payload))
+  const current=await state(env.DB,{skipApprovals:true})
   const pins=[]
   for(const task of tasks){const old=previous?.tasks.find(t=>t.id===task.id);if(!old)continue;const sourceId=`src:${task.id}`;const related=id=>id===sourceId||id?.startsWith(`step:${task.id}:`)
     const oldMeta=saved.find(n=>n.id===sourceId)
-    if(taskReadOK&&old.project!==task.project&&saved.some(n=>related(n.id)||related(n.parentId)||(n.dependencies??[]).some(related))){const projectId=oldMeta?.projectId??(old.project?sourceProject(old.project):'unassigned');pins.push(env.DB.prepare('INSERT INTO cp_nodes(id,payload) SELECT ?,? WHERE (SELECT revision FROM cp_control WHERE id=1)=? AND (SELECT captured_at FROM cp_snapshots WHERE source_key=?)=? ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').bind(sourceId,JSON.stringify({...oldMeta,id:sourceId,origin:'agentdock',projectId}),revision,SOURCE,capturedAt)) }
+    if(taskReadOK&&old.project!==task.project&&saved.some(n=>related(n.id)||related(n.parentId)||(n.dependencies??[]).some(related))){
+      const projectId=oldMeta?.projectId??current.nodes.find(n=>n.id===sourceId)?.projectId??(old.project?sourceProject(old.project):'unassigned')
+      const pin={...oldMeta,id:sourceId,origin:'agentdock',projectId}
+      pins.push(env.DB.prepare('INSERT INTO cp_nodes(id,payload) SELECT ?,? WHERE (SELECT revision FROM cp_control WHERE id=1)=? AND (SELECT captured_at FROM cp_snapshots WHERE source_key=?)=? ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').bind(sourceId,JSON.stringify(pin),revision,SOURCE,capturedAt))
+      const index=saved.findIndex(n=>n.id===sourceId);if(index>=0)saved[index]=pin;else saved.push(pin)
+    }
     for(const step of old.steps??[]){const sid=`step:${task.id}:${step.id}`;if(!task.steps.some(s=>s.id===step.id)&&saved.some(n=>n.id===sid||n.parentId===sid||(n.dependencies??[]).includes(sid)))task.steps.push({...step,missing:true})}
   }
+  const proposed=await state(env.DB,{snapshot:{...data,receivedAt:now()},metadata:saved.map(n=>({id:n.id,payload:JSON.stringify(n)})),skipApprovals:true})
+  validateGraph(proposed.nodes,proposed.projects)
   const statements=[env.DB.prepare("INSERT INTO cp_snapshots (source_key,captured_at,received_at,payload) SELECT ?,?,?,? WHERE (SELECT revision FROM cp_control WHERE id=1)=? AND COALESCE((SELECT captured_at FROM cp_snapshots WHERE source_key=?),'')=? ON CONFLICT(source_key) DO UPDATE SET captured_at=excluded.captured_at,received_at=excluded.received_at,payload=excluded.payload").bind(SOURCE,capturedAt,now(),JSON.stringify(data),revision,SOURCE,previous?.capturedAt??'')]
   const sourceEvent=(kind,id,summary)=>env.DB.prepare('INSERT INTO cp_events(id,kind,node_id,summary,created_at) SELECT ?,?,?,?,? WHERE (SELECT revision FROM cp_control WHERE id=1)=? AND (SELECT captured_at FROM cp_snapshots WHERE source_key=?)=?').bind(crypto.randomUUID(),kind,id,summary,now(),revision,SOURCE,capturedAt)
   if(!previous)statements.push(sourceEvent('source',null,`首次只读同步 ${tasks.length} 个任务`))
@@ -73,22 +82,31 @@ async function ingest(req,env) {
 }
 
 function sourceProject(name) { return `source-project:${encodeURIComponent(name)}` }
-async function state(db) {
-  const snap=await snapshot(db), storedProjects=await rows(db,'SELECT * FROM cp_projects ORDER BY name'), metadata=await rows(db,'SELECT * FROM cp_nodes')
+async function state(db, options={}) {
+  const snap=options.snapshot??await snapshot(db), storedProjects=await rows(db,'SELECT * FROM cp_projects ORDER BY name'), metadata=options.metadata??await rows(db,'SELECT * FROM cp_nodes')
   const overlays=new Map(metadata.map(row=>[row.id,JSON.parse(row.payload)]))
+  const management=await loadProjectManagement(db), records=await loadGovernance(db)
+  const projectLinks=options.projectLinks??management.projectLinks
+  const aliases=new Map(projectLinks.map(l=>[l.sourceProjectId,l.targetProjectId]))
   const projects=[...PRESETS.map(name=>({id:`preset:${name}`,name,owner:'',goal:'预置管理容器',archived:false})),...storedProjects.map(p=>({...p,archived:!!p.archived})),{id:'unassigned',name:'未归属',owner:'',goal:'来源未明确提供项目',archived:false}]
   for(const task of snap?.tasks??[])if(task.project&&!projects.some(p=>p.id===sourceProject(task.project)))projects.push({id:sourceProject(task.project),name:task.project,owner:'',goal:'来源明确项目字段',archived:false})
   for(const meta of overlays.values())if(meta.projectId?.startsWith('source-project:')&&!projects.some(p=>p.id===meta.projectId)){projects.push({id:meta.projectId,name:decodeURIComponent(meta.projectId.slice('source-project:'.length)),owner:'',goal:'保留的历史管理归属',archived:false})}
+  for(const id of [...management.profiles.map(p=>p.id),...projectLinks.map(l=>l.sourceProjectId),...Object.values(records).flat().map(r=>r.projectId)])if(!projects.some(p=>p.id===id)&&id.startsWith('source-project:'))projects.push({id,name:decodeURIComponent(id.slice('source-project:'.length)),owner:'',goal:'保留的历史管理归属',archived:false})
+  for(const project of projects)Object.assign(project,{phase:'',status:'active'},management.profiles.find(p=>p.id===project.id)??{})
   const nodes=[]
   for(const t of snap?.tasks??[]){
-    const id=`src:${t.id}`, overlay=overlays.get(id)??{}, projectId=overlay.projectId??(t.project?sourceProject(t.project):'unassigned')
+    const id=`src:${t.id}`, overlay=overlays.get(id)??{}, projectId=overlay.projectId??(t.project?(aliases.get(sourceProject(t.project))??sourceProject(t.project)):'unassigned')
     nodes.push({...overlay,id,projectId,parentId:overlay.parentId??null,kind:'task',title:t.title,status:t.status,priority:overlay.priority??'medium',owner:overlay.owner??'',agentId:overlay.agentId??'',acceptanceCriteria:t.conditions,dependencies:overlay.dependencies??[],origin:'agentdock',sourceTaskId:t.id,missing:t.missing})
     for(const s of t.steps){if(nodes.length>=10000)break;const sid=`step:${t.id}:${s.id}`, meta=overlays.get(sid)??{};nodes.push({...meta,id:sid,projectId,parentId:id,kind:'subtask',title:s.title,status:s.status,priority:meta.priority??'medium',owner:meta.owner??'',agentId:meta.agentId??'',acceptanceCriteria:[],dependencies:meta.dependencies??[],origin:'agentdock',sourceTaskId:t.id,missing:t.missing||s.missing})}
   }
   for(const value of overlays.values())if(value.origin==='local')nodes.push(value)
   const stale=!snap||!snap.taskReadOK||Date.now()-Date.parse(snap.receivedAt)>90000
   const agents=(snap?.agents??[]).map(a=>({...a,stale:a.stale||Date.now()-Date.parse(a.observedAt)>60000,status:a.stale||Date.now()-Date.parse(a.observedAt)>60000?'Unknown':a.status})).sort((a,b)=>Number(a.stale)-Number(b.stale)||String(b.lastActivityAt).localeCompare(String(a.lastActivityAt)))
-  return {projects,nodes,tasks:snap?.tasks??[],agents,capabilities:snap?.capabilities??[],history:(await rows(db,'SELECT * FROM cp_events ORDER BY created_at DESC LIMIT 1000')).map(e=>({id:e.id,kind:e.kind,nodeId:e.node_id,summary:e.summary,createdAt:e.created_at})),source:{machine:snap?.machine??'PC-20251130TKZA',sourceKey:SOURCE,capturedAt:snap?.capturedAt??null,receivedAt:snap?.receivedAt??null,stale,taskReadOK:snap?.taskReadOK??false,taskCount:snap?.tasks.filter(t=>!t.missing).length??0,warnings:snap?.warnings??[]}}
+  const data={projects,nodes,tasks:snap?.tasks??[],projectLinks,...records,agents,capabilities:snap?.capabilities??[],history:(await rows(db,'SELECT * FROM cp_events ORDER BY created_at DESC LIMIT 1000')).map(e=>({id:e.id,kind:e.kind,nodeId:e.node_id,summary:e.summary,createdAt:e.created_at,projectId:nodes.find(n=>n.id===e.node_id)?.projectId??null})),source:{machine:snap?.machine??'PC-20251130TKZA',sourceKey:SOURCE,capturedAt:snap?.capturedAt??null,receivedAt:snap?.receivedAt??null,stale,taskReadOK:snap?.taskReadOK??false,taskCount:snap?.tasks.filter(t=>!t.missing).length??0,warnings:snap?.warnings??[]}}
+  for(const event of data.history){try{const audit=JSON.parse(event.summary);if(audit&&typeof audit==='object'&&audit.actorId)Object.assign(event,audit)}catch{}}
+  const digests=new Map()
+  if(!options.skipApprovals)data.approvals=await Promise.all(data.approvals.map(async a=>({...a,isStale:await approvalIsStale(data,a,digests)})))
+  return data
 }
 
 function validateGraph(nodes,projects) {
@@ -113,14 +131,18 @@ async function manageNode(req,env,id) {
   const nodes=current.nodes.filter(n=>n.id!==node.id);nodes.push(node)
   if(node.origin==='agentdock'&&!node.id.startsWith('step:'))for(const step of nodes.filter(n=>n.id.startsWith(`step:${node.sourceTaskId}:`)))step.projectId=node.projectId
   validateGraph(nodes,current.projects)
-  const statements=[env.DB.prepare('INSERT INTO cp_nodes (id,payload) SELECT ?,? WHERE (SELECT revision FROM cp_control WHERE id=1)=? ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').bind(node.id,JSON.stringify(node),revision),env.DB.prepare('UPDATE cp_control SET revision=revision+1 WHERE id=1 AND revision=?').bind(revision)]
+  const persisted={...node},prior=await first(env.DB,'SELECT payload FROM cp_nodes WHERE id=?',node.id)
+  // Presence of a stored projectId denotes an explicit override (including legacy records and graph pins).
+  // A priority/owner-only edit keeps an inherited alias reversible.
+  if(node.origin==='agentdock'&&!('projectId'in input)&&!JSON.parse(prior?.payload??'{}').projectId)delete persisted.projectId
+  const statements=[env.DB.prepare('INSERT INTO cp_nodes (id,payload) SELECT ?,? WHERE (SELECT revision FROM cp_control WHERE id=1)=? ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').bind(node.id,JSON.stringify(persisted),revision),env.DB.prepare('UPDATE cp_control SET revision=revision+1 WHERE id=1 AND revision=?').bind(revision)]
   const result=await env.DB.batch(statements);assert(result[0].meta.changes===1,'任务图已更新，请刷新后重试',409)
   await record(env.DB,'management',node.id,`${old?'更新':'创建'} ${node.kind}：${node.title}`)
   return json(node,old?200:201)
 }
 
-const TOOL_NAMES=['list_projects','get_task_graph','get_task','list_agents','get_execution_history']
-const TOOL_DESCRIPTIONS=['查看私有项目列表','查看项目任务层级与依赖图','查看来源任务详情与执行事件','查看 Agent 真实证据、未知与过期状态','查看执行观察与管理历史']
+const TOOL_NAMES=['list_projects','get_task_graph','get_task','list_agents','get_execution_history','list_approvals','list_decisions','list_artifacts']
+const TOOL_DESCRIPTIONS=['查看私有项目列表','查看项目任务层级与依赖图','查看来源任务详情与执行事件','查看 Agent 真实证据、未知与过期状态','查看执行观察与管理历史','查看人工验收请求与版本过期状态','查看项目决策记录','查看版本化产物引用']
 async function mcp(req,env) {
   assert(req.method==='POST','MCP 使用 POST',405);const message=await body(req)
   assert(message.jsonrpc==='2.0'&&typeof message.method==='string','JSON-RPC 无效')
@@ -131,8 +153,26 @@ async function mcp(req,env) {
   if(message.method==='tools/list')return reply({tools:TOOL_NAMES.map((name,i)=>({name,description:TOOL_DESCRIPTIONS[i],inputSchema:{type:'object',properties:{projectId:{type:'string'},taskId:{type:'string'},limit:{type:'integer',minimum:1,maximum:100}},additionalProperties:false},annotations:{readOnlyHint:true,destructiveHint:false,idempotentHint:true,openWorldHint:false},securitySchemes:[{type:'oauth2',scopes:[]}]}))})
   if(message.method!=='tools/call'||!TOOL_NAMES.includes(message.params?.name))return json({jsonrpc:'2.0',id:message.id,error:{code:-32601,message:'仅支持已注册的只读工具'}})
   readAccess(req,env);const args=message.params.arguments??{};assert(plain(args)&&Object.keys(args).every(k=>['projectId','taskId','limit'].includes(k)),'工具参数无效');const limit=args.limit??100;assert(Number.isInteger(limit)&&limit>0&&limit<=100,'limit 无效');const data=await state(env.DB)
+  for(const key of ['projectId','taskId'])if(key in args)assert(typeof args[key]==='string'&&args[key].length<=500,'工具筛选参数无效')
+  const taskNodes=args.taskId?new Set(data.nodes.filter(n=>n.id===args.taskId||n.sourceTaskId===args.taskId).map(n=>n.id)):null
+  const filter=items=>items.filter(item=>(!args.projectId||item.projectId===args.projectId)&&(!taskNodes||taskNodes.has(item.nodeId))).slice(0,limit)
+  const associated=key=>data[key].filter(item=>taskNodes?.has(item.nodeId)&&(!args.projectId||item.projectId===args.projectId)).slice(0,limit)
   let result
-  switch(message.params.name){case'list_projects':result={projects:data.projects};break;case'get_task_graph':result={nodes:(args.projectId?data.nodes.filter(n=>n.projectId===args.projectId):data.nodes),source:data.source};break;case'get_task':assert(typeof args.taskId==='string','taskId 必填');result={task:data.tasks.find(t=>t.id===args.taskId)??null,source:data.source};break;case'list_agents':result={agents:data.agents.slice(0,limit),capabilities:data.capabilities,source:data.source};break;default:result={history:data.history.filter(h=>!args.taskId||h.nodeId===`src:${args.taskId}`).slice(0,limit),source:data.source};}
+  switch(message.params.name){
+    case 'list_projects':result={projects:data.projects};break
+    case 'get_task_graph':result={nodes:args.projectId?data.nodes.filter(n=>n.projectId===args.projectId):data.nodes,source:data.source};break
+    case 'get_task':{
+      assert(typeof args.taskId==='string','taskId 必填')
+      const node=data.nodes.find(n=>n.id===args.taskId||n.id===`src:${args.taskId}`)
+      const inProject=node&&(!args.projectId||node.projectId===args.projectId)
+      result={task:inProject?(data.tasks.find(t=>t.id===args.taskId)??node):null,contextDigest:inProject?await contextDigest(data,node):null,approvals:associated('approvals'),decisions:associated('decisions'),artifacts:associated('artifacts'),source:data.source};break
+    }
+    case 'list_agents':result={agents:data.agents.slice(0,limit),capabilities:data.capabilities,source:data.source};break
+    case 'list_approvals':result={approvals:filter(data.approvals)};break
+    case 'list_decisions':result={decisions:filter(data.decisions)};break
+    case 'list_artifacts':result={artifacts:filter(data.artifacts)};break
+    default:result={history:filter(data.history),source:data.source}
+  }
   return reply({content:[{type:'text',text:JSON.stringify(result)}],structuredContent:result,isError:false})
 }
 
@@ -142,6 +182,13 @@ export async function fetchHandler(req,env,assets={}) {
     if(path==='/mcp')return await mcp(req,env)
     if(path==='/api/ingest'&&req.method==='POST')return await ingest(req,env)
     if(path==='/api/state'&&req.method==='GET'){readAccess(req,env);return json(await state(env.DB))}
+    const contextMatch=path.match(/^\/api\/nodes\/([^/]+)\/context$/)
+    if(contextMatch&&req.method==='GET'){
+      readAccess(req,env);const id=decodeURIComponent(contextMatch[1]);assert(id.length<=500,'节点 ID 无效')
+      const data=await state(env.DB,{skipApprovals:true}),node=data.nodes.find(n=>n.id===id);assert(node,'节点不存在',404)
+      return json({nodeId:node.id,projectId:node.projectId,contextDigest:await contextDigest(data,node)})
+    }
+    const governance=await handleGovernance(req,env,path,{assert,text,list,body,writeAccess,state,first,run,now,json,validateGraph});if(governance)return governance
     if(path==='/api/projects'&&req.method==='POST'){writeAccess(req);const input=await body(req);const name=text(input.name,200).trim();assert(name,'项目名称为空');const current=await state(env.DB);assert(!current.projects.some(p=>p.name===name),'项目名称已存在',409);const project={id:`project:${crypto.randomUUID()}`,name,owner:text(input.owner,300),goal:text(input.goal,2000),archived:false};await run(env.DB,'INSERT INTO cp_projects (id,name,owner,goal,archived) VALUES (?,?,?,?,0)',project.id,name,project.owner,project.goal);await record(env.DB,'management',null,`创建项目：${name}`);return json(project,201)}
     if(path==='/api/nodes'&&req.method==='POST')return await manageNode(req,env)
     if(path.startsWith('/api/nodes/')&&req.method==='PATCH')return await manageNode(req,env,decodeURIComponent(path.slice('/api/nodes/'.length)))

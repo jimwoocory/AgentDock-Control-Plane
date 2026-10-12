@@ -8,6 +8,13 @@
       "when": 1791779259614,
       "tag": "0000_overrated_korvac",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1791787433366,
+      "tag": "0001_daily_governance",
+      "breakpoints": true
     }
   ]
 }

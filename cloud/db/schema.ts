@@ -1,6 +1,11 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, uniqueIndex, index } from 'drizzle-orm/sqlite-core'
 export const snapshots = sqliteTable('cp_snapshots', { source_key: text('source_key').primaryKey(), captured_at: text('captured_at').notNull(), received_at: text('received_at').notNull(), payload: text('payload').notNull() })
 export const projects = sqliteTable('cp_projects', { id: text('id').primaryKey(), name: text('name').notNull().unique(), owner: text('owner').notNull(), goal: text('goal').notNull(), archived: integer('archived').notNull().default(0) })
 export const nodes = sqliteTable('cp_nodes', { id: text('id').primaryKey(), payload: text('payload').notNull() })
 export const events = sqliteTable('cp_events', { id: text('id').primaryKey(), kind: text('kind').notNull(), node_id: text('node_id'), summary: text('summary').notNull(), created_at: text('created_at').notNull() })
 export const control = sqliteTable('cp_control', { id: integer('id').primaryKey(), revision: integer('revision').notNull().default(0) })
+export const projectProfiles = sqliteTable('cp_project_profiles', { id: text('id').primaryKey(), payload: text('payload').notNull() })
+export const projectLinks = sqliteTable('cp_project_links', { source_project_id: text('source_project_id').primaryKey(), target_project_id: text('target_project_id').notNull(), reason: text('reason').notNull() })
+export const approvals = sqliteTable('cp_approvals', { id: text('id').primaryKey(), project_id: text('project_id').notNull(), node_id: text('node_id').notNull(), payload: text('payload').notNull() }, t => [index('cp_approvals_project_node').on(t.project_id,t.node_id)])
+export const decisions = sqliteTable('cp_decisions', { id: text('id').primaryKey(), project_id: text('project_id').notNull(), node_id: text('node_id'), payload: text('payload').notNull() }, t => [index('cp_decisions_project_node').on(t.project_id,t.node_id)])
+export const artifacts = sqliteTable('cp_artifacts', { id: text('id').primaryKey(), project_id: text('project_id').notNull(), node_id: text('node_id').notNull().default(''), name: text('name').notNull(), version: text('version').notNull(), payload: text('payload').notNull() }, t => [uniqueIndex('cp_artifacts_version').on(t.project_id,t.node_id,t.name,t.version)])
