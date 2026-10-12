@@ -32,4 +32,4 @@ MCP：https://agentdock-control-plane.jimwoo-cory.chatgpt.site/mcp
 
 截图保存在忽略目录 `.data/cloud-p0-acceptance.png`，显示私有Site公司来源、四层图及依赖。P1暂停/恢复/审批未实现，未将原始控制验收全部标记通过。
 
-合入前文档复审：统计区分来源与本地验收；Unknown不宣称在线Worker；访问范围未扩大；未包含秘密或来源正文；历史CP-04平台资格路线保留为追溯，当前独立采集器路线不依赖该资格。main复验完成后由Integrator关闭CP-08。
+合入前文档复审：统计区分来源与本地验收；Unknown不宣称在线Worker；访问范围未扩大；未包含秘密或来源正文；历史CP-04平台资格路线保留为追溯，当前独立采集器路线不依赖该资格。任务提交d6bff7e合入main后，Integrator实际复验33/33测试与生产构建退出0，关闭CP-08。此次仅文档变化，未重发生产Site或修改采集器。

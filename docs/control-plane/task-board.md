@@ -4,7 +4,7 @@
 
 | ID | 任务 | 状态 | Owner | 依赖 | Allowed Paths | 验收 |
 | --- | --- | --- | --- | --- | --- | --- |
-| CP-08 | 公司私有页面与 ChatGPT 只读 MCP 最终验收 | IN_PROGRESS | root | CP-06 / CP-07；用户要求完成剩余 P0 | docs/control-plane/** | 五个真实 MCP 工具查询；浏览器创建四层树、依赖与刷新保存；33范围测试/构建；来源哈希、权限与 main 复验 |
+| CP-08 | 公司私有页面与 ChatGPT 只读 MCP 最终验收 | DONE | root | CP-06 / CP-07；用户要求完成剩余 P0 | docs/control-plane/** | d6bff7e任务提交已审查并合入main；main33/33测试与构建通过；五个真实MCP查询、浏览器四层树/依赖/刷新保存、119源文件哈希不变与私有权限通过 |
 | CP-07 | 云端中文界面修正 | DONE | root | 已批准的中文P0与英文遗漏反馈 | cloud/ui/**, cloud/tests/ui*, cloud/scripts/build.mjs, docs/control-plane/** | 已提交合入main，main33测试/构建/Worker验证通过；原私有Site第3版发布及真实预览通过，中文选项对应原API值；来源数据不变 |
 
 用户已批准独立只读采集器替代方案以及采集器自己的 Windows 登录启动项。CP-06 采用私有 Site 服务入口，不依赖 BYOP 资格工具。
