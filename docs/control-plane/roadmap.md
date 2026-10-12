@@ -13,4 +13,6 @@ Gate：
 5. USVDS2、BMAD、Toonflow、Google-TTS、Research Lab 的 50 个 Task 可隔离管理；夹具与实际来源分库。
 6. 来源文件哈希不变、Core 健康、未授权访问及运行时控制被拒绝；相关测试与生产构建通过、分支提交合入 main 后复验。
 
-P1：经后续单独能力验证后添加暂停/恢复/重试、Human Approval Gate、Decision Log 与 Artifact Registry。原始「控制验收」的暂停/恢复/审批属于 P1；P0 的优先级只是本地管理字段，不控制 Worker。
+P1-A（CP-09/CP-10/CP-11，已完成）：可逆来源项目关联/资料/归档；当前/受阻/待整理/历史工作台；版本绑定的人工验收请求及approve/reject/request-change审计；Decision Log与版本化Artifact引用。原私有Site实际浏览器、ChatGPT原MCP数据回读和双main70测试/构建通过。审批不自动暂停或放行运行，产物路径只登记文本。
+
+P1-B（后续独立能力Gate）：暂停/恢复/重试与真正自动链路Human Approval Gate。需要执行层适配与人工权限合同，继续保持独立Control Plane、不修改Core。P0优先级和P1-A审批都是独立管理字段，不能冒充Worker执行控制。P2多Agent调度、自动拆分/恢复及风险预测不在本轮。

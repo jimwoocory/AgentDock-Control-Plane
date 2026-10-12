@@ -8,7 +8,7 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | CP-09 | 日常项目整理与P1管理API | DONE | governance_backend | CP-08与本轮授权 | cloud/worker/**, cloud/db/**, cloud/drizzle/**, cloud/tests/backend*, cloud/tests/governance*, cloud/tests/helpers.mjs, docs/superpowers/** | dead43c/f2d2901实现与修复已独立复审；aaba5db整分支复审合入main，main70/70测试及构建通过 |
 | CP-10 | 中文日常工作台与P1管理界面 | DONE | governance_ui | CP-09接口实现与复审通过 | cloud/ui/**, cloud/tests/ui*, cloud/tests/daily-model*, docs/control-plane/** | 8dfb9d7/1c4fbed/aaba5db已提交及复审；显式选择/连续继承刷新回归通过；已合入main，main70/70测试及构建通过 |
-| CP-11 | 集成、真实项目整理与私有发布验收 | IN_PROGRESS | root | CP-09/CP-10审查与合入 | cloud/**镜像发布, docs/control-plane/**, docs/superpowers/** | CP-09/10复审通过，分支69测试/构建通过；待整分支审查/main复验、原Site发布、明确归属整理、来源哈希与浏览器/MCP验收 |
+| CP-11 | 集成、真实项目整理与私有发布验收 | DONE | root | CP-09/CP-10审查与合入 | cloud/**镜像发布, docs/control-plane/**, docs/superpowers/** | 整分支及修复复审通过，已合入main；双main70/70测试/构建、原Site v4私有功能发布通过；19任务明确绑定、57未知保留、真实浏览器/MCP记录回读、源119哈希0变化、GitHub562fb76首次远程确认；完成文档最终同步另核SHA，见daily-governance-verification.md |
 
 | ID | 任务 | 状态 | Owner | 依赖 | Allowed Paths | 验收 |
 | --- | --- | --- | --- | --- | --- | --- |
