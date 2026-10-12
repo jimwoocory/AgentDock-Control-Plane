@@ -20,6 +20,8 @@
 
 GET /api/state保持原字段，新增projectLinks、approvals、decisions、artifacts；审批含isStale、contextDigest。POST /api/project-links保存或撤销别名；PATCH /api/projects/:id更新profile。POST /api/approvals与POST /api/approvals/:id/review；POST /api/decisions；POST /api/artifacts与PATCH /api/artifacts/:id（仅archived）。所有写操作复用平台用户身份及同Origin校验，服务密钥不具备管理写权限。限定文本、列表、记录数量；SQL参数化；新增迁移仅建表/索引，保留旧D1数据。管理与别名操作有事务和冲突校验。
 
+GET /api/nodes/:encodedId/context只读返回nodeId/projectId/contextDigest，审批表单打开时获取并固定该指纹，创建时一并提交，避免草稿与最新来源错配；UI不调用/mcp取得指纹，以免Site登录之外另触发MCP OAuth。get_task也返回同一contextDigest供聊天查询。编辑来源任务时，仅归属实际改变才传projectId，普通优先级/负责人修改继续继承项目别名；既有显式覆盖/图引用pin保持优先。
+
 MCP继续全部只读；原5工具保持兼容，get_task额外返回关联管理记录，执行历史按project/task正确筛选；新增list_approvals/list_decisions/list_artifacts查询工具，均readOnlyHint。不暴露approve/create/control写工具。
 
 ## UI与验收

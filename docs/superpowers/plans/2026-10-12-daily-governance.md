@@ -35,6 +35,8 @@ POST /api/decisions {projectId,nodeId:null|string,title,choice,reason,alternativ
 POST /api/artifacts {projectId,nodeId:null|string,name,version,description,referenceType:'url'|'path',reference,sha256:'',agentId:''}; PATCH /api/artifacts/:id {archived:boolean}; no file upload or filesystem read.
 MCP adds list_approvals/list_decisions/list_artifacts with existing projectId/taskId/limit schema; taskId uses rawsourceID for source nodes and local ID for local; get_task returns source task or local node plus associated records. project filter works for history and governance. Discovery now8 readonly tools.
 
+GET /api/nodes/:encodedId/context {nodeId,projectId,contextDigest}, private readonly access; get_task also returns contextDigest. New source metadata inherits aliases when projectId omitted; do not persist unchanged effective projectId unless existing explicit metadata/pin already has it.
+
 - [ ] Write meaningful failing tests using synthetic data; example:
 ```js
 const req = await createApproval({projectId:p.id,nodeId:a.id,report:'Synthetic acceptance',artifactIds:[]});
@@ -54,6 +56,8 @@ assert.equal((await state()).approvals[0].isStale,true);
 Files: cloud/ui/app.jsx; new cloud/ui/governance.jsx, daily-model.mjs, api.mjs as useful; cloud/ui/model.mjs/labels.mjs/styles.css; cloud/tests/ui-model.test.mjs or daily-model.test.mjs. Do not change backend.
 
 Consumes: exact Task1 endpoints/state fields; profiles and alias link contract; approvals stale/status/report/artifactIds; decisions and artifacts arrays. Actor identity never submitted in forms.
+
+Contract notes: approvals require projectId/nodeId/report/artifactIds and contextDigest pinned via GET /api/nodes/:encodedId/context when opening form (do not call browser/mcp); arrays explicit, nodeId null|string for project-wide artifact/decision, comments required. get_task returns task/contextDigest/approvals/decisions/artifacts/source. Source editablePayload must omit unchanged projectId so priority-only edits don't pin inherited alias; local nodes still carry projectId. Profile phase/status/archived fields apply all project kinds; artifacts onlyHTTPS without credentials or path text, sha256 empty or64hex. Preserve records under old project when source membership changes.
 
 Produces: Chinese daily task filters current/all/blocked/unassigned/history plus project statistics rooted at task kind, source updated/management activity sort; graph/ancestor search still works. Old/stale Agent records collapsed with explicit count and capability gaps. Workspace tabs 任务/人工审批/决策日志/产物; authenticated forms create records, review pending (意见required), stale warns and blocks review; artifact archive/restore. Selected task and project context drives governance filters; show full report and evidence refs. Project profile edit and explicit source alias bind/revoke UI; clear user errors and save states, background polling preserves unsaved drafts. Login401/403提示从Sites重新打开，no bypass.
 
