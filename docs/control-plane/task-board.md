@@ -6,7 +6,7 @@
 
 | ID | 任务 | 状态 | Owner | 依赖 | Allowed Paths | 验收 |
 | --- | --- | --- | --- | --- | --- | --- |
-| CP-06 | 同步独立私有云端 P0 和公司只读采集器源码 | IN_PROGRESS | root | 云端 main 已提交并通过31测试、私有发布成功、真实读取通过 | cloud/**, docs/control-plane/**, README.md | 只同步 Git 跟踪源码，不含凭据、数据、缓存；cloud 测试构建、复审、main复验及远程推送；浏览器MFA/实际MCP调用保留待验收 |
+| CP-06 | 同步独立私有云端 P0 和公司只读采集器源码 | DONE（源码同步） | root | 云端已私有发布且真实读取通过 | cloud/**, docs/control-plane/**, README.md | 已提交合入main，main31测试/构建/Worker验证通过，远程c13abd1已确认；浏览器MFA/实际MCP调用作为云端P0剩余Gate保留，未标整体验收完成 |
 
 | ID | 任务 | 状态 | Owner | 依赖 | Allowed Paths | 验收 |
 | --- | --- | --- | --- | --- | --- | --- |

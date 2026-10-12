@@ -10,7 +10,9 @@ CP-02 / CP-02-UI / CP-03 已实现、独立复审、提交并合入 main，main 
 
 公司云端替代方案已实际部署：独立只读采集器 → 私有 Site 服务入口 → D1 → React 页面 / 原生只读 MCP。源码见 cloud/；部署地址 https://agentdock-control-plane.jimwoo-cory.chatgpt.site ，仅 Site 所有者可访问。PC-20251130TKZA 的119个真实任务、728个图节点和50条 Codex 会话索引已回读，匿名401；119/119任务文件哈希不变，Core1.1.0-rc.2仍响应。用户已批准独立采集器的 Windows 登录启动任务；后台运行及独立重启已验证。没有修改 Core，也无需重新授权 AgentDock。
 
-NEXT: CP-06 源码同步/主分支复验，以及所有者完成 ChatGPT 双重验证后的浏览器交互和实际 MCP 工具调用。MCP 已由 Sites 托管，/mcp网关正确要求 OAuth；平台报告新插件已安装，但当前任务无新工具句柄，客户端调用不能标通过。云端31测试/构建通过；本地完整P0的既有56测试结果保留。暂停/恢复/审批仍为P1。
+CP-06 源码同步已完成：c13abd1提交合入main，main31测试/构建/Worker验证通过，GitHub远程SHA确认一致。只同步源码，未上传运行数据或凭据。
+
+NEXT: 所有者完成 ChatGPT 双重验证后的浏览器交互和实际 MCP 工具调用。MCP 已由 Sites 托管，/mcp网关正确要求 OAuth；平台报告新插件已安装，但当前任务无新工具句柄，客户端调用不能标通过。本地完整P0既有56测试结果保留；暂停/恢复/审批仍为P1。
 
 只读来源：本机 AgentDock 1.0.1 的任务文件与 loopback /healthz；已经实际采集 7 个任务。后台采集器在每轮结束后等待 15 秒更新独立 SQLite 快照，不依赖浏览器打开。
 
