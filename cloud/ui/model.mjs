@@ -1,0 +1,12 @@
+export function visibleTree(nodes, search='') {
+ const byId=new Map(nodes.map(n=>[n.id,n])); const included=new Set();
+ for(const n of nodes) if(!search || `${n.title} ${n.id} ${n.owner||''} ${n.status||'Unknown'}`.toLowerCase().includes(search.toLowerCase())) {let p=n;const seen=new Set();while(p&&!seen.has(p.id)){seen.add(p.id);included.add(p.id);p=byId.get(p.parentId);}}
+ const result=[],visited=new Set(); const walk=(n,depth)=>{if(visited.has(n.id)||!included.has(n.id))return;visited.add(n.id);result.push({...n,depth});nodes.filter(c=>c.parentId===n.id).forEach(c=>walk(c,depth+1));};
+ nodes.filter(n=>!byId.has(n.parentId)).forEach(n=>walk(n,0));nodes.forEach(n=>walk(n,0));return result;
+}
+export function layoutGraph(nodes){const tree=visibleTree(nodes);const positions=new Map(tree.map((n,i)=>[n.id,{x:36+n.depth*230,y:40+i*100,w:194,h:66}]));return {positions,width:Math.max(640,...tree.map(n=>positions.get(n.id).x+250)),height:Math.max(360,tree.length*100+60)};}
+export function edgePath(a,b){if(b.x>a.x){const end={x:b.x-9,y:b.y+b.h/2};return{end,d:`M ${a.x+a.w} ${a.y+a.h/2} C ${a.x+a.w+28} ${a.y+a.h/2}, ${b.x-32} ${end.y}, ${end.x} ${end.y}`};}const end={x:b.x-9,y:b.y+b.h/2};const rail=Math.min(a.x,b.x)-26;return{end,d:`M ${a.x} ${a.y+a.h/2} C ${rail-35} ${a.y+a.h/2}, ${rail-35} ${end.y}, ${end.x} ${end.y}`};}
+export function editablePayload(draft,node){const source=node?.origin==='agentdock';const planning=['priority','owner','agentId','dependencies'];const keys=source?(node?.id&&!node.id.startsWith('step:')?['projectId','parentId',...planning]:planning):['projectId','parentId','kind','title','status','priority','owner','agentId','acceptanceCriteria','dependencies'];const payload=Object.fromEntries(keys.map(k=>[k,draft[k]]).filter(([,v])=>v!==undefined));if(!source&&typeof payload.acceptanceCriteria==='string')payload.acceptanceCriteria=payload.acceptanceCriteria.split('\n').map(item=>item.trim()).filter(Boolean);return payload;}
+export function parentCandidates(nodes,draft){const ranks=['epic','feature','task','subtask'];return nodes.filter(n=>n.id!==draft.id&&n.projectId===draft.projectId&&ranks.indexOf(n.kind)<ranks.indexOf(draft.kind));}
+export function mergeEditorDraft(latest,draft,dirty){if(!latest)return null;if(!dirty||!draft)return {...latest,dependencies:[...(latest.dependencies||[])]};return {...latest,...editablePayload(draft,latest)};}
+

@@ -2,6 +2,12 @@
 
 当前云端扩展（用户已批准，2026-10-12）：
 
+用户已批准独立只读采集器替代方案以及采集器自己的 Windows 登录启动项。CP-06 采用私有 Site 服务入口，不依赖 BYOP 资格工具。
+
+| ID | 任务 | 状态 | Owner | 依赖 | Allowed Paths | 验收 |
+| --- | --- | --- | --- | --- | --- | --- |
+| CP-06 | 同步独立私有云端 P0 和公司只读采集器源码 | IN_PROGRESS | root | 云端 main 已提交并通过31测试、私有发布成功、真实读取通过 | cloud/**, docs/control-plane/**, README.md | 只同步 Git 跟踪源码，不含凭据、数据、缓存；cloud 测试构建、复审、main复验及远程推送；浏览器MFA/实际MCP调用保留待验收 |
+
 | ID | 任务 | 状态 | Owner | 依赖 | Allowed Paths | 验收 |
 | --- | --- | --- | --- | --- | --- | --- |
 | CP-04 | 公司私有 Site 资格与真实只读验证 | BLOCKED | root | 用户确认公司目标；Sites 插件资格接口 | sites/control-plane/**, docs/control-plane/**, docs/superpowers/** | 原生只读及10项离线校验通过；资格工具缺失，实际私有托管登录/读取/刷新未验证，不标DONE |

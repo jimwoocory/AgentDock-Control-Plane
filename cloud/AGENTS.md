@@ -1,0 +1,3 @@
+# Independent private cloud P0
+
+Read README.md, docs/status.md, docs/roadmap.md, docs/task-board.md, docs/development-plan.md, docs/needs-decision.md. Claim only READY tasks and record one owner. Work on codex/CP-06-private-sync in this isolated worktree; do not edit AgentDock Core/config/task/session files. Collector files live only in its own directory outside AgentDock. No secrets, real task bodies, databases, or runtime state in Git. Backend, UI, and collector scopes are separate. DONE requires review, commit/integration and fresh verification. Root alone owns native Sites registration, secrets, production deployment and installation handoff.

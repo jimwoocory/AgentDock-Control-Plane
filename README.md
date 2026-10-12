@@ -24,6 +24,8 @@ It works with OpenClaw, Claude Code, Codex, and other runtimes - it is not part 
 
 ## Start locally
 
+本仓库的 AgentDock P0：本地页面与只读适配说明见 [docs/control-plane/run.md](docs/control-plane/run.md)。公司私有 Sites 版本与独立只读采集器源码位于 [cloud/](cloud/)，登录、Task Graph、Agent 状态、执行历史和 MCP 接入说明见 [cloud-run.md](docs/control-plane/cloud-run.md)。
+
 Node.js 22 or newer and pnpm are required for a source install.
 
 ```bash
