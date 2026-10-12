@@ -1,5 +1,12 @@
 # 任务板
 
+当前云端扩展（用户已批准，2026-10-12）：
+
+| ID | 任务 | 状态 | Owner | 依赖 | Allowed Paths | 验收 |
+| --- | --- | --- | --- | --- | --- | --- |
+| CP-04 | 公司私有 Site 资格与真实只读验证 | BLOCKED | root | 用户确认公司目标；Sites 插件资格接口 | sites/control-plane/**, docs/control-plane/**, docs/superpowers/** | 原生只读及10项离线校验通过；资格工具缺失，实际私有托管登录/读取/刷新未验证，不标DONE |
+| CP-05 | 完整云端 P0 与只读 MCP | BACKLOG | — | CP-04 托管 Gate | 后续 Site checkout 的 app/**, components/**, db/**, migrations/**, .openai/**, docs/control-plane/** | D1/任务图/Agent与历史、5项目50任务、私有授权和实际MCP调用、审查与main复验 |
+
 | ID | 任务 | 状态 | Owner | 依赖 | Allowed Paths | 验收 |
 | --- | --- | --- | --- | --- | --- | --- |
 | CP-01 | 本地运行与真实只读观察面板 | DONE | root | 上游固定基线 | src/lib/agentdock/**, src/app/api/agentdock/**, src/lib/db.ts, src/lib/config.test.ts, src/proxy.ts, scripts/control-plane/**, docs/control-plane/**, docs/superpowers/plans/** | P0 Gate、提交、main复验已通过，见 verification.md |
