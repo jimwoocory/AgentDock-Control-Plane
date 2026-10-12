@@ -13,10 +13,10 @@ export function taskRuntime(data,id){
  const declaredAgentId=node.agentId||null;
  const reported=(data.agents??[]).filter(a=>reportsTask(a,node));
  const assigned=(data.agents??[]).find(a=>a.id===declaredAgentId);
- const candidates=declaredAgentId?(assigned?[assigned]:[]):reported;
+ const candidates=[...new Map([...(assigned?[assigned]:[]),...reported].map(a=>[a.id,a])).values()];
  const agent=candidates.length===1?candidates[0]:null;
  const shared=declaredAgentId&&(data.nodes??[]).filter(n=>n.kind==='task'&&!n.missing&&n.agentId===declaredAgentId&&!['completed','done','canceled','cancelled'].includes(n.status)).length>1;
- const conflict=!!shared||candidates.length>1||!!(assigned?.taskId&&!reportsTask(assigned,node));
+ const conflict=!!shared||candidates.length>1||!!(declaredAgentId&&reported.some(a=>a.id!==declaredAgentId))||!!(assigned?.taskId&&!reportsTask(assigned,node));
  const binding=conflict?'CONFLICT':declaredAgentId?'MANAGEMENT':reported.length?'RUNTIME':'UNBOUND';
  const sourceStale=data.source?.stale!==false||!!node.missing;
  const fresh=!!agent&&agent.stale===false&&agent.present!==false&&!sourceStale&&!conflict;

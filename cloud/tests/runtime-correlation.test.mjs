@@ -30,6 +30,12 @@ test('runtime-reported binding works; mismatched or multiply assigned sessions f
  assert.equal(module.taskRuntime(shared,nodeId).binding,'CONFLICT');
  assert.equal(module.taskRuntime(data(undefined,{nodes:[]}),nodeId),null);
 });
+test('a different runtime-reported worker cannot be hidden by an owner assignment',()=>{
+ const conflicting=data(undefined,{agents:[agent(),agent({id:'codex:reported',taskId})]});
+ const r=module.taskRuntime(conflicting,nodeId);
+ assert.equal(r.binding,'CONFLICT');assert.equal(r.evidence,'CONFLICT');assert.equal(r.sessionStatus,'Unknown');assert.equal(r.currentAction,null);
+ assert.deepEqual(r.candidates.map(a=>a.id).sort(),['codex:fixture','codex:reported']);
+});
 test('MCP task and project filters return only explicitly linked agents, independent of limit',async()=>{
  const {call,service,user}=setup(),snap=fixture();
  snap.agents=[agent({id:'codex:other'}),agent()];
@@ -43,4 +49,7 @@ test('MCP task and project filters return only explicitly linked agents, indepen
  assert.deepEqual((await rpc('list_agents',{taskId:'tsk_2222222222222222'})).agents,[]);
  assert.deepEqual((await rpc('list_agents',{projectId:'preset:BMAD'})).agents,[]);
  assert.deepEqual((await rpc('list_agents',{projectId:'unassigned'})).agents.map(a=>a.id),['codex:fixture']);
+ assert.deepEqual((await rpc('list_agents',{taskId,projectId:'preset:BMAD'})).agents,[]);
+ const step=await rpc('get_task',{taskId:`step:${taskId}:s1`});
+ assert.equal(step.task.id,`step:${taskId}:s1`);assert.equal(step.task.kind,'subtask');assert.equal(step.runtime.taskId,taskId);
 });
