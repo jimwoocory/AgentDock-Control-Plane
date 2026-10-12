@@ -2,6 +2,9 @@
 
 当前云端扩展（用户已批准，2026-10-12）：
 
+| ID | 任务 | 状态 | Owner | 依赖 | Allowed Paths | 验收 |
+| --- | --- | --- | --- | --- | --- | --- |
+| CP-08 | 公司私有页面与 ChatGPT 只读 MCP 最终验收 | IN_PROGRESS | root | CP-06 / CP-07；用户要求完成剩余 P0 | docs/control-plane/** | 五个真实 MCP 工具查询；浏览器创建四层树、依赖与刷新保存；33范围测试/构建；来源哈希、权限与 main 复验 |
 | CP-07 | 云端中文界面修正 | DONE | root | 已批准的中文P0与英文遗漏反馈 | cloud/ui/**, cloud/tests/ui*, cloud/scripts/build.mjs, docs/control-plane/** | 已提交合入main，main33测试/构建/Worker验证通过；原私有Site第3版发布及真实预览通过，中文选项对应原API值；来源数据不变 |
 
 用户已批准独立只读采集器替代方案以及采集器自己的 Windows 登录启动项。CP-06 采用私有 Site 服务入口，不依赖 BYOP 资格工具。
@@ -12,8 +15,8 @@
 
 | ID | 任务 | 状态 | Owner | 依赖 | Allowed Paths | 验收 |
 | --- | --- | --- | --- | --- | --- | --- |
-| CP-04 | 公司私有 Site 资格与真实只读验证 | BLOCKED | root | 用户确认公司目标；Sites 插件资格接口 | sites/control-plane/**, docs/control-plane/**, docs/superpowers/** | 原生只读及10项离线校验通过；资格工具缺失，实际私有托管登录/读取/刷新未验证，不标DONE |
-| CP-05 | 完整云端 P0 与只读 MCP | BACKLOG | — | CP-04 托管 Gate | 后续 Site checkout 的 app/**, components/**, db/**, migrations/**, .openai/**, docs/control-plane/** | D1/任务图/Agent与历史、5项目50任务、私有授权和实际MCP调用、审查与main复验 |
+| CP-04 | 公司私有 Site 资格与真实只读验证（历史路线） | SUPERSEDED | root | 用户确认公司目标；Sites 插件资格接口 | sites/control-plane/**, docs/control-plane/**, docs/superpowers/** | BYOP资格接口未取得；用户批准独立采集器路线取代此依赖，见CP-06/CP-08；不宣称资格查询通过 |
+| CP-05 | 完整云端 P0 与只读 MCP（历史拆分） | SUPERSEDED | — | CP-04 托管 Gate | 后续 Site checkout 的 app/**, components/**, db/**, migrations/**, .openai/**, docs/control-plane/** | 完整实现由CP-06/CP-07交付，真实私有浏览器及ChatGPT MCP最终验收由CP-08收口 |
 
 | ID | 任务 | 状态 | Owner | 依赖 | Allowed Paths | 验收 |
 | --- | --- | --- | --- | --- | --- | --- |
