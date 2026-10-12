@@ -48,7 +48,3 @@ function App(){
  </main><footer>Read-only company snapshots · Local planning · Refresh every 20 seconds</footer></div>
 }
 createRoot(document.getElementById('root')).render(<App/>);
-
-
-
-
