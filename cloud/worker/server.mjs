@@ -1,4 +1,5 @@
 import { loadGovernance, loadProjectManagement, contextDigest, approvalIsStale, handleGovernance } from './governance.mjs'
+import { applyOwnerRepair } from './repair.mjs'
 const SOURCE = 'company:PC-20251130TKZA'
 const KINDS = ['epic','feature','task','subtask']
 const PRIORITIES = ['low','medium','high','urgent']
@@ -78,7 +79,8 @@ async function ingest(req,env) {
     for(const a of agents){const old=previous.agents.find(x=>x.id===a.id);if(!old||old.status!==a.status||old.present!==a.present)statements.push(sourceEvent('agent',a.id,`${a.label} · ${a.status}${a.stale?' · 过期':''}`))}
   }
   const persisted=await env.DB.batch([...statements.slice(0,250),...pins,env.DB.prepare('UPDATE cp_control SET revision=revision+1 WHERE id=1 AND revision=? AND (SELECT captured_at FROM cp_snapshots WHERE source_key=?)=?').bind(revision,SOURCE,capturedAt)]);assert(persisted[0].meta.changes===1,'任务图或来源已更新，稍后重试同步',409);await run(env.DB,'DELETE FROM cp_events WHERE id NOT IN (SELECT id FROM cp_events ORDER BY created_at DESC LIMIT 1000)')
-  return json({accepted:true,capturedAt,taskCount:tasks.length,agentCount:agents.length,taskReadOK})
+  const repair=await applyOwnerRepair(env.DB,env,{state,validateGraph,rows,first,now})
+  return json({accepted:true,capturedAt,taskCount:tasks.length,agentCount:agents.length,taskReadOK,...(repair?{repair}:{})})
 }
 
 function sourceProject(name) { return `source-project:${encodeURIComponent(name)}` }

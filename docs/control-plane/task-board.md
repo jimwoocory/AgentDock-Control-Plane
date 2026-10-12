@@ -4,6 +4,7 @@
 
 | ID | 任务 | 状态 | Owner | 依赖 | Allowed Paths | 验收 |
 | --- | --- | --- | --- | --- | --- | --- |
+| CP-14 | 所有者配置的一次性管理数据修复 | IN_PROGRESS | root | 用户2026-10-12明确批准一次性修复；CP-12固定映射与CP-13缺口报告 | cloud/worker/server.mjs, cloud/worker/repair.mjs, cloud/db/schema.ts, cloud/drizzle/**, cloud/tests/repair.test.mjs, docs/control-plane/**；私有修复计划仅.data/和原Site secret配置 | 完整批次预检、全局CAS原子写入、永久幂等审计与原元数据备份；只更新确认归属及登记真实报告/提交pending请求，不能审批、派发、修改来源或扩大API/MCP权限；失败不阻断正常采集；合入main复验与原私有发布后MCP真实回查 |
 | CP-12 | 当前任务归属核对与私有项目行动清单 | IN_PROGRESS | root | CP-11与本轮授权 | docs/control-plane/**；.data/**（忽略、不得提交真实内容）；原私有Site管理元数据 | 最新来源逐项核对，明确证据与候选归属分开；当前/受阻任务均有下一步和阻塞说明；不确定项可由用户确认；来源哈希不变 |
 | CP-13 | USVDS2真实产物与验收报告提交 | IN_PROGRESS | root | CP-12项目事实及现有P1接口 | docs/control-plane/**；.data/**（忽略）；原私有Site产物/验收记录 | 实际文件/SHA及部署已核对，缺口报告已保存；在线D1/CAS验收、产物登记与请求提交尚未完成，MCP当前0记录；不得标DONE或称pending，最终审批由用户完成 |
 
