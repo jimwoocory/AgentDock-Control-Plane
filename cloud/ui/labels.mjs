@@ -10,6 +10,8 @@ const labels = {
   'No snapshot':'暂无快照',Stale:'数据已过期','Fresh snapshot':'数据新鲜',
   Local:'本地',local:'本地',agentdock:'AgentDock',codex:'Codex',claude:'Claude',
   management:'管理记录',source:'来源记录',agent:'Agent 记录',
+  approval:'验收请求',approval_review:'审批意见',decision:'决策记录',artifact:'产物登记',
+  artifact_archive:'产物归档变更',project_profile:'项目资料',project_link:'项目绑定',
   unavailable:'不可用',error:'错误',ok:'可用',OK:'正常',
   task_started:'任务开始',task_complete:'任务完成',turn_aborted:'本轮中止',
   'Codex local readonly lifecycle':'Codex 本地只读生命周期',
