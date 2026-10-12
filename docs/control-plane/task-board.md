@@ -2,7 +2,7 @@
 
 | ID | 任务 | 状态 | Owner | 依赖 | Allowed Paths | 验收 |
 | --- | --- | --- | --- | --- | --- | --- |
-| CP-15 | 任务与执行会话关联及只读运行证据展示 | IN_PROGRESS | root | CP-11；用户2026-10-12确认任务板主线并批准继续 | cloud/shared/**, cloud/worker/server.mjs, cloud/ui/**, cloud/tests/runtime*, docs/control-plane/**；真实证据仅.data/** | 明确管理关联/运行自报关联及冲突；展示会话状态与最近一轮事件、来源检查点；taskId/projectId筛选准确；过期/缺失未知，不以active冒充Running；范围测试/构建/独立审查/main复验；正常所有者关联与原私有Site发布回读 |
+| CP-15 | 任务与执行会话关联及只读运行证据展示 | REVIEW（main复验通过，待私有发布） | root | CP-11；用户2026-10-12确认任务板主线并批准继续 | cloud/shared/**, cloud/worker/server.mjs, cloud/ui/**, cloud/tests/runtime*, docs/control-plane/**；真实证据仅.data/** | 明确管理关联/运行自报关联及冲突；展示会话状态与最近一轮事件、来源检查点；taskId/projectId筛选准确；过期/缺失未知，不以active冒充Running；范围测试/构建/独立审查/main复验；正常所有者关联与原私有Site发布回读 |
 
 CP-15 不控制业务执行，不向来源任务或Core写入，不采集聊天正文、提示词或密钥。当前jimeng任务仅用于只读验收，具体ID及会话只保留私有运行证据。
 
