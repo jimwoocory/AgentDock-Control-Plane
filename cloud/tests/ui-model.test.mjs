@@ -23,3 +23,19 @@ test('unrecognized source statuses stay visible as their original strings',async
   assert.equal(label('constructor'),'constructor');
   assert.equal(label('external-runtime-status'),'external-runtime-status');
 });
+
+test('priority-only source edit keeps reversible project alias inheritance',()=>{
+ const source={id:'src:synthetic',origin:'agentdock',projectId:'preset:Target',priority:'low'};
+ assert.deepEqual(editablePayload({...source,priority:'high'},source),{priority:'high'});
+ assert.equal(editablePayload({...source,projectId:'preset:Other'},source).projectId,'preset:Other');
+ assert.equal(editablePayload({...source,origin:'local'},null).projectId,'preset:Target');
+});
+test('poll keeps dirty editor if source disappears and preserves inherited alias changes',async()=>{
+ const {mergeEditorDraft}=await import('../ui/model.mjs');
+ const original={id:'src:synthetic',origin:'agentdock',projectId:'old',owner:'Original',dependencies:[]};
+ const draft={...original,owner:'Unsaved'};
+ assert.deepEqual(mergeEditorDraft(undefined,draft,true,original),draft);
+ const latest={...original,projectId:'new'};
+ assert.equal(mergeEditorDraft(latest,draft,true,original).projectId,'new');
+ assert.equal(mergeEditorDraft(latest,{...draft,projectId:'chosen'},true,original).projectId,'chosen');
+});
