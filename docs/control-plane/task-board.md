@@ -8,7 +8,7 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | CP-09 | 日常项目整理与P1管理API | REVIEW | governance_backend | CP-08与本轮授权 | cloud/worker/**, cloud/db/**, cloud/drizzle/**, cloud/tests/backend*, cloud/tests/governance*, cloud/tests/helpers.mjs, docs/superpowers/** | dead43c/f2d2901已提交；独立复审通过；源采集年龄/历史步骤关联问题已修复；等待main复验 |
 | CP-10 | 中文日常工作台与P1管理界面 | REVIEW | governance_ui | CP-09接口实现与复审通过 | cloud/ui/**, cloud/tests/ui*, cloud/tests/daily-model*, docs/control-plane/** | 8dfb9d7完整67测试/构建通过；1c4fbed修复刷新覆盖显式项目选择并补中文历史类型，25覆盖测试/构建通过；等待复审及main复验 |
-| CP-11 | 集成、真实项目整理与私有发布验收 | READY | root | CP-09/CP-10审查与合入 | cloud/**镜像发布, docs/control-plane/**, docs/superpowers/** | 测试/构建/审查/main复验；原Site发布；真实明确项目归属整理，来源哈希不变；浏览器与只读MCP验收 |
+| CP-11 | 集成、真实项目整理与私有发布验收 | IN_PROGRESS | root | CP-09/CP-10审查与合入 | cloud/**镜像发布, docs/control-plane/**, docs/superpowers/** | CP-09/10复审通过，分支69测试/构建通过；待整分支审查/main复验、原Site发布、明确归属整理、来源哈希与浏览器/MCP验收 |
 
 | ID | 任务 | 状态 | Owner | 依赖 | Allowed Paths | 验收 |
 | --- | --- | --- | --- | --- | --- | --- |
