@@ -73,6 +73,7 @@ export async function applyOwnerRepair(db,env,{state,validateGraph,rows,first,no
     if(approval){statements.push(guarded('INSERT INTO cp_approvals(id,project_id,node_id,payload) SELECT ?,?,?,? WHERE (SELECT revision FROM cp_control WHERE id=1)=?',approval.id,approval.projectId,approval.nodeId,JSON.stringify(approval)));statements.push(event('approval',approval.nodeId,{projectId:approval.projectId,recordId:approval.id,summary:'提交真实验收缺口报告；等待人工审批'}))}
     const journal={id:plan.id,planDigest:hash,appliedAt:at,actorId:ACTOR,originalMetadata,mappings:plan.mappings,artifactIds:artifacts.map(a=>a.id),approvalId:approval?.id??null}
     statements.push(guarded('INSERT INTO cp_repairs(id,payload) SELECT ?,? WHERE (SELECT revision FROM cp_control WHERE id=1)=?',plan.id,JSON.stringify(journal)))
+    statements.push(guarded('DELETE FROM cp_events WHERE id NOT IN (SELECT id FROM cp_events ORDER BY created_at DESC LIMIT 1000) AND (SELECT revision FROM cp_control WHERE id=1)=?'))
     statements.push(db.prepare('UPDATE cp_control SET revision=revision+1 WHERE id=1 AND revision=?').bind(revision))
     const result=await db.batch(statements);check(result[0].meta.changes===1,'管理数据并发变化，修复暂缓')
     return {status:'applied',id:plan.id,mappingCount:plan.mappings.length,artifactCount:artifacts.length,approvalId:approval?.id??null}

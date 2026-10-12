@@ -101,3 +101,15 @@ test('collector request fields and MCP calls cannot supply an owner repair plan 
   assert.equal(bad.error.code,-32601)
   assert.equal((await state(h)).nodes[0].projectId,'unassigned')
 })
+
+test('repair retains the bounded event history while its permanent journal survives trimming',async()=>{
+  const h=await seed()
+  const insert=h.sqlite.prepare('INSERT INTO cp_events(id,kind,node_id,summary,created_at) VALUES(?,?,?,?,?)')
+  for(let i=0;i<1000;i++)insert.run(`old-${i}`,'fixture',null,'old event',new Date(i).toISOString())
+  configure(h.env,plan())
+  const result=await (await h.call('/api/ingest','POST',h.input,h.service)).json()
+  assert.equal(result.repair.status,'applied')
+  assert.equal(h.sqlite.prepare('SELECT COUNT(*) AS n FROM cp_events').get().n,1000)
+  assert.equal(h.sqlite.prepare('SELECT COUNT(*) AS n FROM cp_repairs').get().n,1)
+  assert.equal((await state(h)).history.filter(e=>e.kind==='owner_repair').length,1)
+})
