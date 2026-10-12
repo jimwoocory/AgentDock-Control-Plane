@@ -13,4 +13,3 @@ export function setup() {
   return { env, call, user, service, sqlite }
 }
 export const fixture = () => ({ sourceKey: 'company:PC-20251130TKZA', machine: 'PC-20251130TKZA', capturedAt: new Date().toISOString(), taskReadOK: true, tasks: [{ id: 'tsk_0123456789abcdef', title: 'Synthetic source', status: 'active', phase: 'work', project: null, updated_at: '2026-10-12T00:00:00Z', conditions: [], steps: [{ id: 's1', title: 'Synthetic step', status: 'pending' }], events: [] }], agents: [], capabilities: [], warnings: [] })
-
