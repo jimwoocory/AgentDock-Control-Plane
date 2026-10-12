@@ -1,0 +1,20 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {build} from 'esbuild';
+import {mkdtemp,mkdir,rm} from 'node:fs/promises';
+import path from 'node:path';
+import {pathToFileURL} from 'node:url';
+import React from 'react';
+import {renderToStaticMarkup} from 'react-dom/server';
+test('rendered task evidence distinguishes active task, expired ended turn and recorded checkpoint',async t=>{
+ const base=path.resolve('tests/.data');await mkdir(base,{recursive:true});const dir=await mkdtemp(path.join(base,'runtime-ui-'));
+ t.after(()=>{assert.ok(dir.startsWith(base+path.sep));return rm(dir,{recursive:true,force:true});});
+ const output=path.join(dir,'runtime.mjs');
+ await build({entryPoints:['ui/task-runtime.jsx'],bundle:true,platform:'node',format:'esm',packages:'external',jsx:'automatic',outfile:output});
+ const {TaskRuntime}=await import(pathToFileURL(output));
+ const state={source:{stale:false},nodes:[{id:'src:tsk_0123456789abcdef',sourceTaskId:'tsk_0123456789abcdef',kind:'task',status:'active',agentId:'codex:fixture'}],tasks:[{id:'tsk_0123456789abcdef',updated_at:'2026-10-12T00:00:00Z',steps:[{id:'design',title:'Design checkpoint',status:'in_progress',updated_at:'2026-10-12T00:00:00Z'}]}],agents:[{id:'codex:fixture',label:'Codex thread fixture',status:'Unknown',rawStatus:'task_complete',stale:true,present:true,lastActivityAt:'2026-10-12T01:00:00Z'}]};
+ const html=renderToStaticMarkup(React.createElement(TaskRuntime,{state,nodeId:state.nodes[0].id}));
+ assert.match(html,/任务执行关联/);assert.match(html,/管理关联/);assert.match(html,/任务状态<\/dt><dd>进行中/);assert.match(html,/会话观测状态<\/dt><dd>未知/);
+ assert.match(html,/最近一轮已结束/);assert.match(html,/Design checkpoint/);assert.match(html,/来源尚未提供/);assert.match(html,/不等于业务任务完成/);
+ assert.equal(renderToStaticMarkup(React.createElement(TaskRuntime,{state,nodeId:'missing'})),'');
+});

@@ -1,5 +1,6 @@
 import { loadGovernance, loadProjectManagement, contextDigest, approvalIsStale, handleGovernance } from './governance.mjs'
 import { applyOwnerRepair } from './repair.mjs'
+import { taskRuntime, scopedAgents } from '../shared/task-runtime.mjs'
 const SOURCE = 'company:PC-20251130TKZA'
 const KINDS = ['epic','feature','task','subtask']
 const PRIORITIES = ['low','medium','high','urgent']
@@ -170,9 +171,9 @@ async function mcp(req,env) {
       assert(typeof args.taskId==='string','taskId 必填')
       const node=data.nodes.find(n=>n.id===args.taskId||n.id===`src:${args.taskId}`)
       const inProject=node&&(!args.projectId||node.projectId===args.projectId)
-      result={task:inProject?(data.tasks.find(t=>t.id===args.taskId)??node):null,contextDigest:inProject?await contextDigest(data,node):null,approvals:associated('approvals'),decisions:associated('decisions'),artifacts:associated('artifacts'),source:data.source};break
+      result={task:inProject?(data.tasks.find(t=>t.id===node.sourceTaskId)??node):null,runtime:inProject?taskRuntime(data,node.id):null,contextDigest:inProject?await contextDigest(data,node):null,approvals:associated('approvals'),decisions:associated('decisions'),artifacts:associated('artifacts'),source:data.source};break
     }
-    case 'list_agents':result={agents:data.agents.slice(0,limit),capabilities:data.capabilities,source:data.source};break
+    case 'list_agents':result={agents:scopedAgents(data,args).slice(0,limit),capabilities:data.capabilities,source:data.source};break
     case 'list_approvals':result={approvals:filter(data.approvals)};break
     case 'list_decisions':result={decisions:filter(data.decisions)};break
     case 'list_artifacts':result={artifacts:filter(data.artifacts)};break
