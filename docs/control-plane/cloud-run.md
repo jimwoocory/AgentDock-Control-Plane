@@ -1,8 +1,8 @@
 # 私有云端入口
 
-页面：https://agentdock-control-plane.jimwoo-cory.chatgpt.site
+页面：https://agentdock-control-plane.jimwoo-cory.chatgpt.site 。Sites 列表名称为「AgentDock 工程控制台」，第3版界面已中文化。
 
-使用创建 Site 的 ChatGPT 账号登录。私有页面首次登录可能要求 ChatGPT 双重验证；这不是重新授权 AgentDock。首页左侧选项目（实际来源没有项目字段的任务位于「未归属」），中间 Task graph/Hierarchy 查看图或树，选节点后右侧查看事实和管理字段。Agents 和 History 在页面下方，来源详情中的 Events 为原始只读执行记录。
+使用创建 Site 的 ChatGPT 账号登录。私有页面首次登录可能要求 ChatGPT 双重验证；这不是重新授权 AgentDock。也可从 Sites 列表选择「编辑」进入已登录账号的实际预览。首页左侧选项目（实际来源没有项目字段的任务位于「未归属」），中间「任务图／层级树」查看图或树，右侧「节点详情」查看事实和管理字段。「Agent 状态」和「历史记录」在页面下方，来源详情中的「执行事件」为原始只读记录。来源标题和原始数据保留，不自动翻译。
 
 只读 MCP：https://agentdock-control-plane.jimwoo-cory.chatgpt.site/mcp
 

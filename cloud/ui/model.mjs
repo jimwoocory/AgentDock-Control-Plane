@@ -1,6 +1,7 @@
+import {label} from './labels.mjs';
 export function visibleTree(nodes, search='') {
  const byId=new Map(nodes.map(n=>[n.id,n])); const included=new Set();
- for(const n of nodes) if(!search || `${n.title} ${n.id} ${n.owner||''} ${n.status||'Unknown'}`.toLowerCase().includes(search.toLowerCase())) {let p=n;const seen=new Set();while(p&&!seen.has(p.id)){seen.add(p.id);included.add(p.id);p=byId.get(p.parentId);}}
+ for(const n of nodes) if(!search || `${n.title} ${n.id} ${n.owner||''} ${n.status||'Unknown'} ${label(n.status||'Unknown')} ${label(n.kind)} ${label(n.priority)}`.toLowerCase().includes(search.toLowerCase())) {let p=n;const seen=new Set();while(p&&!seen.has(p.id)){seen.add(p.id);included.add(p.id);p=byId.get(p.parentId);}}
  const result=[],visited=new Set(); const walk=(n,depth)=>{if(visited.has(n.id)||!included.has(n.id))return;visited.add(n.id);result.push({...n,depth});nodes.filter(c=>c.parentId===n.id).forEach(c=>walk(c,depth+1));};
  nodes.filter(n=>!byId.has(n.parentId)).forEach(n=>walk(n,0));nodes.forEach(n=>walk(n,0));return result;
 }

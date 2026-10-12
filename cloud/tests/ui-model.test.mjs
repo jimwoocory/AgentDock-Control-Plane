@@ -9,3 +9,17 @@ test('blank local criteria serialize as an empty array',()=>{assert.deepEqual(ed
 test('edited local criteria serialize one nonempty trimmed item per line',()=>{assert.deepEqual(editablePayload({acceptanceCriteria:' First \n \nSecond  '},null).acceptanceCriteria,['First','Second']);assert.deepEqual(editablePayload({acceptanceCriteria:['Existing']},null).acceptanceCriteria,['Existing'])});
 test('source task planning permits project and parent while source step remains fixed',()=>{const draft={projectId:'new',parentId:'feature',priority:'high'};assert.deepEqual(editablePayload(draft,{id:'src:1',origin:'agentdock'}),draft);assert.deepEqual(editablePayload(draft,{id:'step:1:2',origin:'agentdock'}),{priority:'high'})});
 test('parent choices respect chosen project and kind rank',async()=>{const {parentCandidates}=await import('../ui/model.mjs');const nodes=[{id:'e',projectId:'p',kind:'epic'},{id:'f',projectId:'p',kind:'feature'},{id:'t',projectId:'p',kind:'task'},{id:'other',projectId:'q',kind:'epic'}];assert.deepEqual(parentCandidates(nodes,{projectId:'p',kind:'task',id:'t'}).map(n=>n.id),['e','f'])});
+
+test('Chinese status search retains source facts and saving still submits API enums',()=>{
+  const source={id:'src:1',title:'Original source title',status:'completed',kind:'task',priority:'high',origin:'agentdock'};
+  assert.deepEqual(visibleTree([source],'已完成').map(n=>n.id),['src:1']);
+  assert.equal(visibleTree([source],'已完成')[0].status,'completed');
+  assert.equal(source.title,'Original source title');
+  assert.deepEqual(editablePayload({status:'active',priority:'urgent'},null),{status:'active',priority:'urgent'});
+});
+
+test('unrecognized source statuses stay visible as their original strings',async()=>{
+  const {label}=await import('../ui/labels.mjs');
+  assert.equal(label('constructor'),'constructor');
+  assert.equal(label('external-runtime-status'),'external-runtime-status');
+});
