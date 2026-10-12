@@ -2,6 +2,14 @@
 
 当前云端扩展（用户已批准，2026-10-12）：
 
+本轮CP-09~CP-11已由用户批准：真实项目整理、P0日常使用、P1人工审批/决策/产物管理；所有运行来源只读。
+
+| ID | 任务 | 状态 | Owner | 依赖 | Allowed Paths | 验收 |
+| --- | --- | --- | --- | --- | --- | --- |
+| CP-09 | 日常项目整理与P1管理API | IN_PROGRESS | governance_backend | CP-08与本轮授权 | cloud/worker/**, cloud/db/**, cloud/drizzle/**, cloud/tests/backend*, cloud/tests/governance*, cloud/tests/helpers.mjs, docs/superpowers/** | 项目别名可撤销；审批版本/冲突/审计；决策与产物持久化；服务密钥拒绝写入；MCP只读 |
+| CP-10 | 中文日常工作台与P1管理界面 | READY | — | CP-09接口合同完成后执行 | cloud/ui/**, cloud/tests/ui*, docs/control-plane/** | 当前/受阻/待整理/历史筛选，Agent过期折叠；审批/决策/产物真实表单，刷新保留；无虚假执行控制 |
+| CP-11 | 集成、真实项目整理与私有发布验收 | READY | root | CP-09/CP-10审查与合入 | cloud/**镜像发布, docs/control-plane/**, docs/superpowers/** | 测试/构建/审查/main复验；原Site发布；真实明确项目归属整理，来源哈希不变；浏览器与只读MCP验收 |
+
 | ID | 任务 | 状态 | Owner | 依赖 | Allowed Paths | 验收 |
 | --- | --- | --- | --- | --- | --- | --- |
 | CP-08 | 公司私有页面与 ChatGPT 只读 MCP 最终验收 | DONE | root | CP-06 / CP-07；用户要求完成剩余 P0 | docs/control-plane/** | d6bff7e任务提交已审查并合入main；main33/33测试与构建通过；五个真实MCP查询、浏览器四层树/依赖/刷新保存、119源文件哈希不变与私有权限通过 |
