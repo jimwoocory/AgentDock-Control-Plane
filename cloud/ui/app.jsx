@@ -23,7 +23,7 @@ function App(){
  const project=projects.find(p=>p.id===activeId);const projectNodes=nodes.filter(n=>n.projectId===activeId);const selected=nodes.find(n=>n.id===selectedId);const source=(selected?.origin||draft?.origin)==='agentdock';const sourceStep=source&&(selected?.id||draft?.id)?.startsWith('step:');const draftNodes=nodes.filter(n=>n.projectId===draft?.projectId);
  // Explicit project choices can equal the opening project after inheritance changes.
  // Track that edit separately so polling never mistakes it for untouched membership.
- useEffect(()=>{if(!creating)setDraft(previous=>mergeEditorDraft(selected,previous,dirty,editorBaseline.current,projectEdited.current));if(!dirty&&selected)editorBaseline.current=selected},[selected,creating]);
+ useEffect(()=>{if(!creating)setDraft(previous=>mergeEditorDraft(selected,previous,dirty,projectEdited.current));if(!dirty&&selected)editorBaseline.current=selected},[selected,creating]);
  const select=n=>{if(dirty&&!window.confirm('放弃尚未保存的节点修改吗？'))return;editorBaseline.current=n;projectEdited.current=false;setCreating(false);setSelectedId(n.id);setDraft({...n,dependencies:[...(n.dependencies||[])]});setDirty(false);setNotice('')};
  const chooseProject=(id,preserveFilter=false)=>{if(dirty&&!window.confirm('放弃尚未保存的节点修改吗？'))return;if(!preserveFilter&&dailyFilter==='unassigned')setDailyFilter('current');projectEdited.current=false;setProjectId(id);setSelectedId('');setCreating(false);setDraft(null);setDirty(false)};
  const edit=(key,value)=>{setDraft(d=>({...d,[key]:value}));setDirty(true);setNotice('')};

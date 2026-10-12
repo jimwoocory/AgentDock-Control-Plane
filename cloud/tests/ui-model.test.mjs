@@ -34,21 +34,21 @@ test('poll keeps dirty editor if source disappears and preserves inherited alias
  const {mergeEditorDraft}=await import('../ui/model.mjs');
  const original={id:'src:synthetic',origin:'agentdock',projectId:'old',owner:'Original',dependencies:[]};
  const draft={...original,owner:'Unsaved'};
- assert.deepEqual(mergeEditorDraft(undefined,draft,true,original),draft);
+ assert.deepEqual(mergeEditorDraft(undefined,draft,true,false),draft);
  const latest={...original,projectId:'new'};
- assert.equal(mergeEditorDraft(latest,draft,true,original).projectId,'new');
- assert.equal(mergeEditorDraft(latest,{...draft,projectId:'chosen'},true,original).projectId,'chosen');
+ assert.equal(mergeEditorDraft(latest,draft,true,false).projectId,'new');
+ assert.equal(mergeEditorDraft(latest,{...draft,projectId:'chosen'},true,true).projectId,'chosen');
 });
 test('explicitly selecting original source project after inherited move survives later polls and save',async()=>{
  const {mergeEditorDraft}=await import('../ui/model.mjs');
  const opening={id:'src:synthetic',origin:'agentdock',projectId:'old',owner:'Original',dependencies:[]};
  const latest={...opening,projectId:'new'};
- const inherited=mergeEditorDraft(latest,{...opening,owner:'Unsaved'},true,opening,false);
+ const inherited=mergeEditorDraft(latest,{...opening,owner:'Unsaved'},true,false);
  assert.equal(inherited.projectId,'new');
  const explicit={...inherited,projectId:'old'};
- const polled=mergeEditorDraft(latest,explicit,true,opening,true);
+ const polled=mergeEditorDraft(latest,explicit,true,true);
  assert.equal(polled.projectId,'old');
- assert.equal(mergeEditorDraft(latest,polled,true,opening,true).projectId,'old');
+ assert.equal(mergeEditorDraft(latest,polled,true,true).projectId,'old');
  assert.deepEqual(editablePayload(polled,latest),{projectId:'old',owner:'Unsaved',dependencies:[]});
 });
 test('governance history kinds display Chinese while record identity and source prose remain unchanged',async()=>{
@@ -58,4 +58,19 @@ test('governance history kinds display Chinese while record identity and source 
  assert.deepEqual(displayed.map(record=>record.kind),['验收请求','审批意见','决策记录','产物登记','产物归档变更','项目资料','项目绑定']);
  assert.equal(displayed[0].summary,'Original source prose');
  assert.equal(records[1].kind,'approval_review');
+});
+test('untouched source project follows sequential aliases and revoke without adding a project override',async()=>{
+ const {mergeEditorDraft}=await import('../ui/model.mjs');
+ const opening={id:'src:synthetic',origin:'agentdock',projectId:'original',owner:'Original',dependencies:[]};
+ let draft={...opening,owner:'Unsaved'};
+ for(const projectId of ['alias-a','alias-b','original']){
+  const latest={...opening,projectId};
+  draft=mergeEditorDraft(latest,draft,true,false);
+  assert.equal(draft.projectId,projectId);
+  assert.deepEqual(editablePayload(draft,latest),{owner:'Unsaved',dependencies:[]});
+ }
+ const latest={...opening,projectId:'alias-c'};
+ const explicit=mergeEditorDraft(latest,{...draft,projectId:'chosen'},true,true);
+ assert.equal(explicit.projectId,'chosen');
+ assert.deepEqual(editablePayload(explicit,latest),{projectId:'chosen',owner:'Unsaved',dependencies:[]});
 });
