@@ -2,7 +2,7 @@
 
 当前云端扩展（用户已批准，2026-10-12）：
 
-| CP-07 | 云端中文界面修正 | READY | root | 已批准的中文P0与英文遗漏反馈 | cloud/ui/**, cloud/tests/ui*, cloud/scripts/build.mjs, docs/control-plane/** | 文案/状态中文，API枚举与来源内容不变；33测试构建、main复验、私有发布与真实预览通过；同步GitHub |
+| CP-07 | 云端中文界面修正 | DONE | root | 已批准的中文P0与英文遗漏反馈 | cloud/ui/**, cloud/tests/ui*, cloud/scripts/build.mjs, docs/control-plane/** | 已提交合入main，main33测试/构建/Worker验证通过；原私有Site第3版发布及真实预览通过，中文选项对应原API值；来源数据不变 |
 
 用户已批准独立只读采集器替代方案以及采集器自己的 Windows 登录启动项。CP-06 采用私有 Site 服务入口，不依赖 BYOP 资格工具。
 
