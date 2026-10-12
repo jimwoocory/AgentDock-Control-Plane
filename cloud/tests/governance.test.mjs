@@ -224,3 +224,46 @@ test('readonly API context uses normal Site auth and pins exact effective source
  const local=await (await c.call('/api/nodes/'+encodeURIComponent(node.id)+'/context','GET',undefined,c.user)).json();assert.equal(local.nodeId,node.id);assert.match(local.contextDigest,/^[a-f0-9]{64}$/)
  assert.equal((await c.call('/api/nodes/local%3Amissing/context','GET',undefined,c.user)).status,404)
 })
+
+test('a newly received old capture remains stale and cannot create an approval',async()=>{
+ const c=setup(),data=fixture();data.capturedAt=new Date(Date.now()-600000).toISOString()
+ assert.equal((await c.call('/api/ingest','POST',data,c.service)).status,200)
+ const s=await read(c);assert.equal(s.source.stale,true)
+ assert.equal((await c.call('/api/ingest','POST',data,c.service)).status,200)
+ assert.equal((await read(c)).source.stale,true)
+ assert.equal((await c.call('/api/approvals','POST',{projectId:'unassigned',nodeId:'src:'+data.tasks[0].id,report:'Old capture',artifactIds:[]},c.user)).status,409)
+})
+
+test('renewed delivery time cannot make a ten-minute old captured approval reviewable',async t=>{
+ const c=setup(),data=fixture();await c.call('/api/ingest','POST',data,c.service)
+ const approval=await create(c,'/api/approvals',{projectId:'unassigned',nodeId:'src:'+data.tasks[0].id,report:'Fresh before time passed',artifactIds:[]})
+ const later=Date.now()+600000;t.mock.method(Date,'now',()=>later)
+ c.sqlite.prepare('UPDATE cp_snapshots SET received_at=?').run(new Date(later).toISOString())
+ assert.equal((await c.call('/api/approvals/'+approval.id+'/review','POST',{decision:'approved',comment:'Delayed delivery'},c.user)).status,409)
+ assert.equal((await read(c)).approvals[0].isStale,true)
+ assert.equal((await read(c)).approvals[0].status,'pending')
+})
+
+test('source task queries retain disappeared step governance and history without cross-task leakage',async()=>{
+ const c=setup(),data=fixture(),foreignId='tsk_0123456789abcdee';data.tasks.push({...data.tasks[0],id:foreignId,title:'Foreign source'})
+ await c.call('/api/ingest','POST',data,c.service)
+ const sourceId=data.tasks[0].id,stepId='step:'+sourceId+':s1',foreignStep='step:'+foreignId+':s1'
+ const approval=await create(c,'/api/approvals',{projectId:'unassigned',nodeId:stepId,report:'Historical step',artifactIds:[]})
+ const decision=await create(c,'/api/decisions',{projectId:'unassigned',nodeId:stepId,title:'Historical step',choice:'A',reason:'Evidence',alternatives:[]})
+ const artifact=await create(c,'/api/artifacts',{...artifactInput,projectId:'unassigned',nodeId:stepId})
+ await create(c,'/api/decisions',{projectId:'unassigned',nodeId:foreignStep,title:'Foreign',choice:'B',reason:'Evidence',alternatives:[]})
+ data.tasks[0].steps=[];data.capturedAt=new Date(Date.parse(data.capturedAt)+1000).toISOString()
+ assert.equal((await c.call('/api/ingest','POST',data,c.service)).status,200)
+ assert.equal((await read(c)).nodes.some(n=>n.id===stepId),false)
+ const rpc=async(name,args)=>{const r=await c.call('/mcp','POST',{jsonrpc:'2.0',id:1,method:'tools/call',params:{name,arguments:args}},c.service);assert.equal(r.status,200);return (await r.json()).result.structuredContent}
+ const detail=await rpc('get_task',{taskId:sourceId});assert.deepEqual(detail.approvals.map(r=>r.id),[approval.id]);assert.equal(detail.approvals[0].isStale,true);assert.deepEqual(detail.decisions.map(r=>r.id),[decision.id]);assert.deepEqual(detail.artifacts.map(r=>r.id),[artifact.id])
+ const oldStep=await rpc('get_task',{taskId:stepId});assert.equal(oldStep.task,null);assert.equal(oldStep.contextDigest,null);assert.deepEqual(oldStep.decisions.map(r=>r.id),[decision.id])
+ for(const [name,key,id] of [['list_approvals','approvals',approval.id],['list_decisions','decisions',decision.id],['list_artifacts','artifacts',artifact.id]]){
+   assert.deepEqual((await rpc(name,{taskId:sourceId,projectId:'unassigned'}))[key].map(r=>r.id),[id])
+   assert.deepEqual((await rpc(name,{taskId:stepId,projectId:'unassigned'}))[key].map(r=>r.id),[id])
+   assert.deepEqual((await rpc(name,{taskId:sourceId,projectId:'preset:BMAD'}))[key],[])
+ }
+ const history=(await rpc('get_execution_history',{taskId:sourceId,projectId:'unassigned'})).history
+ assert.equal(history.filter(h=>h.nodeId===stepId).length,3);assert.ok(history.every(h=>h.nodeId!==foreignStep))
+ assert.deepEqual((await rpc('get_execution_history',{taskId:sourceId,projectId:'preset:BMAD'})).history,[])
+})

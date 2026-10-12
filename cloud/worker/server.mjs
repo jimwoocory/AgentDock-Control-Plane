@@ -100,7 +100,7 @@ async function state(db, options={}) {
     for(const s of t.steps){if(nodes.length>=10000)break;const sid=`step:${t.id}:${s.id}`, meta=overlays.get(sid)??{};nodes.push({...meta,id:sid,projectId,parentId:id,kind:'subtask',title:s.title,status:s.status,priority:meta.priority??'medium',owner:meta.owner??'',agentId:meta.agentId??'',acceptanceCriteria:[],dependencies:meta.dependencies??[],origin:'agentdock',sourceTaskId:t.id,missing:t.missing||s.missing})}
   }
   for(const value of overlays.values())if(value.origin==='local')nodes.push(value)
-  const stale=!snap||!snap.taskReadOK||Date.now()-Date.parse(snap.receivedAt)>90000
+  const stale=!snap||!snap.taskReadOK||[snap.capturedAt,snap.receivedAt].some(value=>!Number.isFinite(Date.parse(value))||Date.now()-Date.parse(value)>90000)
   const agents=(snap?.agents??[]).map(a=>({...a,stale:a.stale||Date.now()-Date.parse(a.observedAt)>60000,status:a.stale||Date.now()-Date.parse(a.observedAt)>60000?'Unknown':a.status})).sort((a,b)=>Number(a.stale)-Number(b.stale)||String(b.lastActivityAt).localeCompare(String(a.lastActivityAt)))
   const data={projects,nodes,tasks:snap?.tasks??[],projectLinks,...records,agents,capabilities:snap?.capabilities??[],history:(await rows(db,'SELECT * FROM cp_events ORDER BY created_at DESC LIMIT 1000')).map(e=>({id:e.id,kind:e.kind,nodeId:e.node_id,summary:e.summary,createdAt:e.created_at,projectId:nodes.find(n=>n.id===e.node_id)?.projectId??null})),source:{machine:snap?.machine??'PC-20251130TKZA',sourceKey:SOURCE,capturedAt:snap?.capturedAt??null,receivedAt:snap?.receivedAt??null,stale,taskReadOK:snap?.taskReadOK??false,taskCount:snap?.tasks.filter(t=>!t.missing).length??0,warnings:snap?.warnings??[]}}
   for(const event of data.history){try{const audit=JSON.parse(event.summary);if(audit&&typeof audit==='object'&&audit.actorId)Object.assign(event,audit)}catch{}}
@@ -155,8 +155,11 @@ async function mcp(req,env) {
   readAccess(req,env);const args=message.params.arguments??{};assert(plain(args)&&Object.keys(args).every(k=>['projectId','taskId','limit'].includes(k)),'工具参数无效');const limit=args.limit??100;assert(Number.isInteger(limit)&&limit>0&&limit<=100,'limit 无效');const data=await state(env.DB)
   for(const key of ['projectId','taskId'])if(key in args)assert(typeof args[key]==='string'&&args[key].length<=500,'工具筛选参数无效')
   const taskNodes=args.taskId?new Set(data.nodes.filter(n=>n.id===args.taskId||n.sourceTaskId===args.taskId).map(n=>n.id)):null
-  const filter=items=>items.filter(item=>(!args.projectId||item.projectId===args.projectId)&&(!taskNodes||taskNodes.has(item.nodeId))).slice(0,limit)
-  const associated=key=>data[key].filter(item=>taskNodes?.has(item.nodeId)&&(!args.projectId||item.projectId===args.projectId)).slice(0,limit)
+  const sourceTaskId=/^tsk_[a-f0-9]{16}$/.test(args.taskId??'')?args.taskId:null
+  // A historical source step keeps its encoded task anchor even after leaving the current graph.
+  const matchesTask=nodeId=>!taskNodes||nodeId===args.taskId||taskNodes.has(nodeId)||(sourceTaskId&&(nodeId===`src:${sourceTaskId}`||nodeId?.startsWith(`step:${sourceTaskId}:`)))
+  const filter=items=>items.filter(item=>(!args.projectId||item.projectId===args.projectId)&&matchesTask(item.nodeId)).slice(0,limit)
+  const associated=key=>filter(data[key])
   let result
   switch(message.params.name){
     case 'list_projects':result={projects:data.projects};break
