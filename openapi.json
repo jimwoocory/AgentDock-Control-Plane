@@ -95,6 +95,10 @@
     {
       "name": "Docs",
       "description": "API documentation"
+    },
+    {
+      "name": "AgentDock",
+      "description": "AgentDock control-plane observation and management"
     }
   ],
   "paths": {
@@ -322,6 +326,411 @@
             "$ref": "#/components/responses/NotFound"
           }
         }
+      }
+    },
+    "/api/agentdock": {
+      "get": {
+        "operationId": "getApiAgentdock",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AgentDockObserverSnapshot"
+                    },
+                    {
+                      "properties": {
+                        "validationFixture": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Observation snapshot with validation fixture flag"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "summary": "Get AgentDock observation snapshot",
+        "tags": [
+          "AgentDock"
+        ]
+      }
+    },
+    "/api/agentdock/agents": {
+      "get": {
+        "operationId": "getApiAgentdockAgents",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentDockAgentMonitorSnapshot"
+                }
+              }
+            },
+            "description": "Agent monitor snapshot"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "summary": "Get AgentDock agent monitor snapshot",
+        "tags": [
+          "AgentDock"
+        ]
+      }
+    },
+    "/api/agentdock/bindings": {
+      "post": {
+        "operationId": "postApiAgentdockBindings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "projectId": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "taskId": {
+                    "pattern": "^tsk_[a-f0-9]{16}$",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "taskId",
+                  "projectId"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Binding applied"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "summary": "Bind an observed task to a project",
+        "tags": [
+          "AgentDock"
+        ]
+      }
+    },
+    "/api/agentdock/graph": {
+      "get": {
+        "operationId": "getApiAgentdockGraph",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentDockGraphSnapshot"
+                }
+              }
+            },
+            "description": "Graph snapshot"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "summary": "Get AgentDock control-plane graph snapshot",
+        "tags": [
+          "AgentDock"
+        ]
+      },
+      "patch": {
+        "operationId": "patchApiAgentdockGraph",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "acceptanceCriteria": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "agentId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "dependencies": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "id": {
+                    "description": "Node id to patch",
+                    "type": "string"
+                  },
+                  "kind": {
+                    "enum": [
+                      "epic",
+                      "feature",
+                      "task",
+                      "subtask"
+                    ],
+                    "type": "string"
+                  },
+                  "owner": {
+                    "type": "string"
+                  },
+                  "parentId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "priority": {
+                    "enum": [
+                      "low",
+                      "medium",
+                      "high",
+                      "urgent"
+                    ],
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Node patched"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "summary": "Patch a graph node",
+        "tags": [
+          "AgentDock"
+        ]
+      },
+      "post": {
+        "operationId": "postApiAgentdockGraph",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentDockNodeInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Node created"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "summary": "Create a graph node",
+        "tags": [
+          "AgentDock"
+        ]
+      }
+    },
+    "/api/agentdock/projects": {
+      "post": {
+        "operationId": "postApiAgentdockProjects",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "goal": {
+                    "maxLength": 4000,
+                    "type": "string"
+                  },
+                  "name": {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  "owner": {
+                    "maxLength": 200,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Project created"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "summary": "Create an observation project",
+        "tags": [
+          "AgentDock"
+        ]
+      }
+    },
+    "/api/agentdock/refresh": {
+      "post": {
+        "operationId": "postApiAgentdockRefresh",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentDockObserverSnapshot"
+                }
+              }
+            },
+            "description": "Fresh observation snapshot (source status ok)"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentDockObserverSnapshot"
+                }
+              }
+            },
+            "description": "Observation unavailable; snapshot still returned with source.status != ok"
+          }
+        },
+        "summary": "Refresh AgentDock observation and return the snapshot",
+        "tags": [
+          "AgentDock"
+        ]
       }
     },
     "/api/agents": {
@@ -12171,6 +12580,762 @@
             "type": "integer"
           }
         }
+      },
+      "AgentDockAgentEvent": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "agentId": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer"
+          },
+          "observedAt": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "Idle",
+              "Planning",
+              "Running",
+              "Waiting Approval",
+              "Blocked",
+              "Failed",
+              "Completed",
+              "Unknown"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "agentId",
+          "status",
+          "action",
+          "observedAt"
+        ],
+        "type": "object"
+      },
+      "AgentDockAgentMonitorSnapshot": {
+        "properties": {
+          "agents": {
+            "items": {
+              "$ref": "#/components/schemas/AgentDockObservedAgent"
+            },
+            "type": "array"
+          },
+          "capabilities": {
+            "items": {
+              "$ref": "#/components/schemas/AgentDockMonitorCapability"
+            },
+            "type": "array"
+          },
+          "collectedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/AgentDockAgentEvent"
+            },
+            "type": "array"
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "capabilities",
+          "agents",
+          "events",
+          "stale",
+          "warnings"
+        ],
+        "type": "object"
+      },
+      "AgentDockGraphChange": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer"
+          },
+          "nodeId": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nodeId",
+          "action",
+          "summary",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "AgentDockGraphNode": {
+        "properties": {
+          "acceptanceCriteria": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "agentId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dependencies": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "epic",
+              "feature",
+              "task",
+              "subtask"
+            ],
+            "type": "string"
+          },
+          "missing": {
+            "type": "boolean"
+          },
+          "origin": {
+            "enum": [
+              "local",
+              "agentdock"
+            ],
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "parentId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "priority": {
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "urgent"
+            ],
+            "type": "string"
+          },
+          "projectId": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "sourceTaskId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "projectId",
+          "parentId",
+          "kind",
+          "title",
+          "status",
+          "priority",
+          "owner",
+          "agentId",
+          "acceptanceCriteria",
+          "dependencies",
+          "origin",
+          "sourceTaskId",
+          "missing",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "AgentDockGraphSnapshot": {
+        "properties": {
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/AgentDockGraphChange"
+            },
+            "type": "array"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/AgentDockGraphNode"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "nodes",
+          "changes"
+        ],
+        "type": "object"
+      },
+      "AgentDockMonitorCapability": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "observedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "unavailable",
+              "error"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "status",
+          "description"
+        ],
+        "type": "object"
+      },
+      "AgentDockNodeInput": {
+        "properties": {
+          "acceptanceCriteria": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "agentId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dependencies": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "epic",
+              "feature",
+              "task",
+              "subtask"
+            ],
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "parentId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "priority": {
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "urgent"
+            ],
+            "type": "string"
+          },
+          "projectId": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "projectId",
+          "kind",
+          "title"
+        ],
+        "type": "object"
+      },
+      "AgentDockObservation": {
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "observedAt": {
+            "type": "string"
+          },
+          "phase": {
+            "type": "string"
+          },
+          "sourceUpdatedAt": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "taskId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "taskId",
+          "status",
+          "phase",
+          "sourceUpdatedAt",
+          "observedAt"
+        ],
+        "type": "object"
+      },
+      "AgentDockObservedAgent": {
+        "properties": {
+          "currentAction": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "lastActivityAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastHeartbeatAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "observedAt": {
+            "type": "string"
+          },
+          "present": {
+            "type": "boolean"
+          },
+          "rawStatus": {
+            "type": "string"
+          },
+          "runtime": {
+            "enum": [
+              "codex",
+              "claude",
+              "agentdock"
+            ],
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "Idle",
+              "Planning",
+              "Running",
+              "Waiting Approval",
+              "Blocked",
+              "Failed",
+              "Completed",
+              "Unknown"
+            ],
+            "type": "string"
+          },
+          "taskId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "runtime",
+          "source",
+          "status",
+          "rawStatus",
+          "observedAt",
+          "stale",
+          "present"
+        ],
+        "type": "object"
+      },
+      "AgentDockObservedTask": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AgentDockSourceTask"
+          },
+          {
+            "properties": {
+              "firstSeenAt": {
+                "type": "string"
+              },
+              "lastSeenAt": {
+                "type": "string"
+              },
+              "present": {
+                "type": "boolean"
+              },
+              "projectId": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "projectOrigin": {
+                "enum": [
+                  "source",
+                  "manual",
+                  "unassigned"
+                ],
+                "type": "string"
+              },
+              "sourceKey": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "sourceKey",
+              "projectId",
+              "projectOrigin",
+              "present",
+              "firstSeenAt",
+              "lastSeenAt"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "AgentDockObserverSnapshot": {
+        "properties": {
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/AgentDockObservation"
+            },
+            "type": "array"
+          },
+          "projects": {
+            "items": {
+              "$ref": "#/components/schemas/AgentDockProject"
+            },
+            "type": "array"
+          },
+          "source": {
+            "properties": {
+              "attemptedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "key": {
+                "type": "string"
+              },
+              "observedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "runtime": {
+                "properties": {
+                  "checkedAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "status": {
+                    "enum": [
+                      "healthy",
+                      "unreachable",
+                      "unknown"
+                    ],
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "type": "object"
+              },
+              "sessions": {
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "const": "not-collected",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "stale": {
+                "type": "boolean"
+              },
+              "status": {
+                "enum": [
+                  "ok",
+                  "partial",
+                  "unavailable",
+                  "never"
+                ],
+                "type": "string"
+              },
+              "transport": {
+                "const": "filesystem-readonly",
+                "type": "string"
+              },
+              "warnings": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "key",
+              "transport",
+              "status",
+              "stale",
+              "runtime",
+              "warnings",
+              "sessions"
+            ],
+            "type": "object"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/AgentDockObservedTask"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "source",
+          "projects",
+          "tasks",
+          "history"
+        ],
+        "type": "object"
+      },
+      "AgentDockProject": {
+        "properties": {
+          "goal": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "owner",
+          "goal"
+        ],
+        "type": "object"
+      },
+      "AgentDockSourceTask": {
+        "properties": {
+          "conditions": {
+            "items": {
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "device": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "events": {
+            "items": {
+              "properties": {
+                "created_at": {
+                  "type": "string"
+                },
+                "summary": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "final_review": {
+            "properties": {
+              "status": {
+                "type": "string"
+              },
+              "summary": {
+                "type": "string"
+              },
+              "verified_facts": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "goal": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "phase": {
+            "type": "string"
+          },
+          "project": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "phase": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "updated_at": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "goal",
+          "status",
+          "phase",
+          "created_at",
+          "updated_at",
+          "summary",
+          "steps",
+          "conditions",
+          "events"
+        ],
+        "type": "object"
       }
     },
     "responses": {
