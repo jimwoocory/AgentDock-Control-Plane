@@ -41,10 +41,15 @@ def fetch_star_dates(repo: str) -> list[datetime]:
          "-q", ".[].starred_at"],
         capture_output=True, text=True, check=True,
     ).stdout.split()
-    dates = sorted(datetime.fromisoformat(d.replace("Z", "+00:00")) for d in out)
-    if not dates:
-        raise SystemExit(f"no stargazer data returned for {repo}")
-    return dates
+    return sorted(datetime.fromisoformat(d.replace("Z", "+00:00")) for d in out)
+
+
+def fetch_created_at(repo: str) -> datetime:
+    out = subprocess.run(
+        ["gh", "api", f"repos/{repo}", "-q", ".created_at"],
+        capture_output=True, text=True, check=True,
+    ).stdout.strip()
+    return datetime.fromisoformat(out.replace("Z", "+00:00"))
 
 
 def build_series(dates: list[datetime]) -> list[tuple[datetime, int]]:
@@ -143,7 +148,13 @@ def main() -> None:
     if len(sys.argv) != 3:
         raise SystemExit(__doc__)
     repo, prefix = sys.argv[1], sys.argv[2]
-    pts = build_series(fetch_star_dates(repo))
+    dates = fetch_star_dates(repo)
+    if dates:
+        pts = build_series(dates)
+    else:
+        # No stars yet: render a truthful flat-zero chart spanning the
+        # repo's lifetime instead of failing the weekly refresh.
+        pts = [(fetch_created_at(repo), 0), (datetime.now(timezone.utc), 0)]
     for mode, theme in THEMES.items():
         path = f"{prefix}-{mode}.svg"
         with open(path, "w") as f:
