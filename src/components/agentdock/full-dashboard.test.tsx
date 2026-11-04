@@ -17,10 +17,15 @@ const monitor: AgentMonitorSnapshot = { capabilities: [{ id: 'runtime', label: '
 
 describe('FullDashboard', () => {
   afterEach(() => { cleanup(); vi.restoreAllMocks() })
-  it('隔离项目、标注来源节点只读，并显示 Agent 未知与过期', async () => {
+  // Heaviest interaction flow in this file; allow headroom for loaded CI runners.
+  it('隔离项目、标注来源节点只读，并显示 Agent 未知与过期', { timeout: 15_000 }, async () => {
     vi.stubGlobal('fetch', vi.fn((path: string) => Promise.resolve({ ok: true, status: 200, json: async () => path === '/api/agentdock/graph' ? graph : path === '/api/agentdock/agents' ? monitor : { projects: [{ id: 1, name: 'Alpha' }, { id: 2, name: 'Beta' }] } })))
     render(<FullDashboard />)
     expect(await screen.findByText('任务图谱')).toBeInTheDocument()
+    // Wait until the editor settles on the auto-selected first node (mount
+    // effects flushed) before interacting; a late mount effect can otherwise
+    // silently undo the first click (flaked under CI load).
+    await screen.findByRole('button', { name: '保存本地管理信息' })
     expect(screen.getAllByText('采集已过期').length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole('button', { name: /来源任务/ }))
     expect(await screen.findByText(/来源投影：业务字段只读/)).toBeInTheDocument()
@@ -33,6 +38,10 @@ describe('FullDashboard', () => {
     vi.stubGlobal('fetch', fetchMock)
     render(<FullDashboard />)
     await screen.findByText('任务图谱')
+    // Wait until the editor settles on the auto-selected first node (mount
+    // effects flushed) before interacting; a late mount effect can otherwise
+    // silently undo the first click (flaked under CI load).
+    await screen.findByRole('button', { name: '保存本地管理信息' })
     fireEvent.click(screen.getByRole('button', { name: '新建节点' }))
     fireEvent.change(screen.getByLabelText('标题'), { target: { value: '新任务' } })
     fireEvent.click(screen.getByRole('button', { name: '创建节点' }))
@@ -43,6 +52,10 @@ describe('FullDashboard', () => {
     vi.stubGlobal('fetch', fetchMock)
     render(<FullDashboard />)
     await screen.findByText('任务图谱')
+    // Wait until the editor settles on the auto-selected first node (mount
+    // effects flushed) before interacting; a late mount effect can otherwise
+    // silently undo the first click (flaked under CI load).
+    await screen.findByRole('button', { name: '保存本地管理信息' })
     fireEvent.click(screen.getByRole('button', { name: /来源任务/ }))
     const title = await screen.findByLabelText('标题')
     expect(title).toBeDisabled()
