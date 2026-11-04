@@ -10,6 +10,7 @@ const config = [
       'playwright-report/**',
       '.tmp/**',
       '.playwright-mcp/**',
+      'cloud/**',
     ],
   },
   // The React 19/ESLint ecosystem is still settling. These rules are valuable,
